@@ -1,7 +1,7 @@
 import sys
 import os
 
-from stable_baselines3 import SAC
+from stable_baselines3 import SAC, PPO
 from stable_baselines3.common.env_checker import check_env
 #depends on what enviroment we're importing from
 from env_combined import Environment, SEED
@@ -16,12 +16,12 @@ def main():
     check_env(env)
 
     # 2. Train SAC agent (SAC uses built-in ent_coef entropy exploration instead of epsilon-decay)
-    agent = SAC("MlpPolicy", env, seed=SEED, verbose=1, ent_coef="auto", learning_rate=0.0005)
-    agent.learn(total_timesteps=100000, log_interval=1)
+    agent = PPO("MlpPolicy", env, seed=SEED, verbose=1, ent_coef=0.05, learning_rate=0.0005)
+    agent.learn(total_timesteps=1000000, log_interval=1)
 
 
     # 3. Evaluation step — run multiple episodes so the plot spans ~10k steps
-    num_eval_episodes = 100  # 100 episodes * 1000 steps/episode = 10,0000 steps total
+    num_eval_episodes = 1000  # 100 episodes * 1000 steps/episode = 10,0000 steps total
 
     xpoints = np.array([])
     ypoints = np.array([])
@@ -84,11 +84,13 @@ def main():
 
                 cash = env.portfolio.cash
                 shares = env.portfolio.holdings.get(env.stock.id, 0)
+                """
                 print(
                     f"Episode {episode:<3} | steps: {ep_steps:<5} | "
                     f"final price: ${price:.2f} | cash: ${cash:.2f} | shares: {shares:.0f} | "
                     f"ep_reward: {ep_reward:.2f} | portfolioVal: ${info.get('val', 0.0):.2f}"
                 )
+                """
                 break
 
     env.close()

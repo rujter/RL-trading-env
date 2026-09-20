@@ -11,7 +11,7 @@ added matplotlib to map price, steps and action, made it work using claude debug
 read some articles on improving the observational space
 20.9 researched LSTM and RNN a bit and decided on the upgrade of OBS, got an idea to test the difference and impact of every observable attribute on the effecacy of the RL model, found sources to
 read to improve my trading simulation agents
-21.9 added and debugged the graphs, made functionality to test multiple parameters in one file and combined envs. The trader seems to be less volatile, less profitable when i added OBS functionality of additional past 2 prices
+21.9 added and debugged the graphs, made functionality to test multiple parameters in one file and combined envs. The trader seems to be less volatile, less profitable when i added OBS functionality of additional past 2 prices, implemenmted sharpe ratio
 
 obs notes:
 	https://arxiv.org/html/2411.07585v1#S4:
@@ -66,16 +66,17 @@ Handbook to computational economics:
 	J3−(C−C0​)−F=0 CRASH
 	C0 is a baseline / reference level for chartist proportion — think of it as "the normal, average share of trend-following traders in the market when things are calm
 
-implementaj performance metrics (Sharpe ratio, Sortino ratio, Maximum drawdown, Volatility, Win rate, Profit factor, Turnover, Transaction costs, Slippage, Average holding time, Inventory exposure, Number of trades)
+Performance metrics:
+	Sharpe ratio je basically return od portfolio torej tipo avg return od profitabilitja/std od teh profitabilitijev torej kolko se gibajo gor pa dol
+
+implementaj performance metrics (Sharpe ratio, Maximum drawdown, Volatility, Win rate, Profit factor, Turnover, Transaction costs, Slippage, Average holding time, Inventory exposure, Number of trades)
 https://www.reddit.com/r/quant/comments/1fe27in/what_metrics_do_you_use_to_testoptimize_and/
 https://github.com/ebrahimpichka/quant-perf-measures
 
 naredi boljse trading bote - googlaj to Agent-Based Computational Finance poglej si downloadal dva cpatera useful
-
 uglavnem googlaj state representation reinforcement learning TO
-
 naredi boljso dokumentacijo
-dodaj nesinhrono delovanje
+dodaj nesinhrono delovanje, to bo eno vecjih problemov, basically vec tradeov na step
 dodaj latency, dodaj cancelling
 naredi event queue, configurable latency, cash in stock reservation
 actually se nauci osnove RL in ML tipo statistiko in to 

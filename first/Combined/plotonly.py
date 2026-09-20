@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import math
 
 data = np.load("eval_results.npz")
 xpoints = data["xpoints"]
@@ -14,6 +15,8 @@ profitabilitypercentage_arr = data["profitabilitypercentage_arr"]
 episode_starts = data["episode_starts"]
 
 avg_profitability = np.mean(profitabilitypercentage_arr)
+sharpe = profitabilitypercentage_arr.mean() / profitabilitypercentage_arr.std()
+
 plt.figure(figsize=(20, 6)) 
 plt.plot(xpoints, ypoints, label="price")
 for es in episode_starts:
@@ -24,13 +27,9 @@ plt.ylim(40, 60)
 plt.savefig("pricemovement.png")
 plt.close()
 
-avg_profitability = np.mean(profitabilitypercentage_arr)
 plt.figure(figsize=(20, 6))
 for es in episode_starts:
     plt.axvline(x=es, color='gray', linestyle='--', alpha=0.4)
-
-plt.text(0.02, 0.95, f"avg profitability: {avg_profitability:.2f}%", 
-        transform=plt.gca().transAxes, color='green', fontsize=10, va='top')
 
 plt.axhline(y=50, color='black', linestyle='--', alpha=0.5, label="starting price")
 plt.plot(buy_x, buy_y, linestyle='', marker='o', ms=2, mec='r', mfc='r', label="buy")
@@ -44,6 +43,10 @@ plt.savefig("orders.png")
 plt.close()
 
 plt.figure(figsize=(20, 6)) 
+plt.text(0.02, 0.95, f"avg profitability: {avg_profitability:.2f}%", 
+        transform=plt.gca().transAxes, color='green', fontsize=10, va='top')
+plt.text(0.02, 0.90, f"sharpe ratio: {sharpe:.2f}", 
+        transform=plt.gca().transAxes, color='green', fontsize=10, va='top')
 plt.plot(episode_arr, profitabilitypercentage_arr)
 plt.legend()
 plt.ylim(-5, 50)
