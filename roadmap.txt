@@ -11,6 +11,7 @@ added matplotlib to map price, steps and action, made it work using claude debug
 read some articles on improving the observational space
 20.9 researched LSTM and RNN a bit and decided on the upgrade of OBS, got an idea to test the difference and impact of every observable attribute on the effecacy of the RL model, found sources to
 read to improve my trading simulation agents
+21.9 added and debugged the graphs, made functionality to test multiple parameters in one file and combined envs. The trader seems to be less volatile, less profitable when i added OBS functionality of additional past 2 prices
 
 updataj obs npr dodaj price change history, own outstanding orders, volatility, volume of buy and sell spread ne samo spread, poglej kaksen clanek, uni implementation ki je v docs etc 
 
@@ -76,11 +77,14 @@ https://www.reddit.com/r/quant/comments/1fe27in/what_metrics_do_you_use_to_testo
 https://github.com/ebrahimpichka/quant-perf-measures
 
 naredi boljse trading bote - googlaj to Agent-Based Computational Finance poglej si downloadal dva cpatera useful
-16	Tesfatsion — ACE intro/methodology	(you already have this PDF)
+
 23	Hommes — Heterogeneous Agent Models (tractable few-type models)	cendef.uva.nl/.../chhomwechap2006.pdf
 24	LeBaron — Agent-Based Computational Finance (survey, SF-ASM etc.)	people.brandeis.edu/~blebaron/wps/hbook.pdf
-27	Marks — Market Design Using Agent-Based Models (GA vs RL, auctions)	bobm.net.au/teaching/SimSS/Marks.finalrev.pdf
-28	MacKie-Mason & Wellman — Automated Markets and Trading Agents	hdl.handle.net/2027.42/49510 or SSRN 974921
+
+23. FUNDAMENTALISTS: they know the "true value of the stock" and buy when its below and sell when its above, CHARTISTS are trend followers
+J is the rate of change, C is the proportion of the market held by chartists (speculative), F excess demand for stock by Fundamentalists (real)
+J3−(C−C0​)−F=0 CRASH
+C0 is a baseline / reference level for chartist proportion — think of it as "the normal, average share of trend-following traders in the market when things are calm
 
 uglavnem googlaj state representation reinforcement learning TO
 
