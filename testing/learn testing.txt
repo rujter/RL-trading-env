@@ -1,0 +1,53 @@
+Method	Checks
+self.assertEqual(a, b)	a == b
+self.assertNotEqual(a, b)	a != b
+self.assertTrue(x)	x is truthy
+self.assertFalse(x)	x is falsy
+self.assertIsNone(x)	x is None
+self.assertIn(a, b)	a in b (e.g. a key is in a dict)
+self.assertRaises(SomeError)	code inside raises that specific exception
+
+Step 5: running it
+python -m unittest your_test_file.py
+
+or if you want more detail per test:
+
+python -m unittest -v your_test_file.py
+
+from your_module import Stock, PPinpoint, Portfolio, Order, portfolios, LimitGOrder, create_stock
+
+
+import unittest
+
+class TestMyExchange(unittest.TestCase):
+
+        def setUp(self):
+            # runs automatically before EVERY test method -- fresh state each time
+            portfolios.clear()
+            self.stock = create_stock(1, "test")
+
+            self.buyer = Portfolio({}, 1000)
+            self.buyer.id = 1
+            portfolios[1] = self.buyer
+
+            self.seller = Portfolio({1: 100}, 0)
+            self.seller.id = 2
+            portfolios[2] = self.seller
+
+        def test_something_specific(self):
+            # 1. ARRANGE: set up the exact situation you want to test
+            order = Order(...)
+
+            # 2. ACT: do the thing you're testing
+            LimitGOrder(order, self.stock)
+           
+
+            # 3. ASSERT: check the result is what you expect
+            self.assertEqual(self.stock.pricepoint.highestindx, 500)
+
+if __name__ == "__main__":
+    unittest.main()
+    
+    
+cd /home/ruj/Desktop/Q
+python3 -m unittest -v testcase.py
