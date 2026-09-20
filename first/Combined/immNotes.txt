@@ -1,0 +1,4 @@
+        #setting up episode prices
+        self.priceBefore = 0.0 #novejsa
+        self.priceBefore2 = 0.0 #starejsa
+        #TLE MORAS UPDATAT IN SETTLE TRADE, RESET IN V GET OBS
