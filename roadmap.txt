@@ -13,28 +13,27 @@ read some articles on improving the observational space
 read to improve my trading simulation agents
 21.9 added and debugged the graphs, made functionality to test multiple parameters in one file and combined envs. The trader seems to be less volatile, less profitable when i added OBS functionality of additional past 2 prices
 
-updataj obs npr dodaj price change history, own outstanding orders, volatility, volume of buy and sell spread ne samo spread, poglej kaksen clanek, uni implementation ki je v docs etc 
+obs notes:
+	https://arxiv.org/html/2411.07585v1#S4:
+	Our work examines and assesses 20 different technical indicators (using TA-Lib) as RL inputs and normalizes them utilizing a min/max scalar. The indicators that were used included SMA, OBV, Momentum, Stochastic Oscillator, MACD, CCI, ADX, TRIX, ROC, SAR, TEMA, TRIMA, WMA, DEMA, MFI, CMO, STOCHRSI, UO, BOP, 	and ATR - od tega poglej se kaj so in kaj so tisti referencani paperji odspodaj. basically so ugotvaljali kateri indikatorji so 
+	useless oz neutralni, ne pa harmful kot v ta drugem
 
-https://arxiv.org/html/2411.07585v1#S4:
-Our work examines and assesses 20 different technical indicators (using TA-Lib) as RL inputs and normalizes them utilizing a min/max scalar. The indicators that were used included SMA, OBV, Momentum, Stochastic Oscillator, MACD, CCI, ADX, TRIX, ROC, SAR, TEMA, TRIMA, WMA, DEMA, MFI, CMO, STOCHRSI, UO, BOP, and ATR - od tega poglej se kaj so in kaj so tisti referencani paperji odspodaj. basically so ugotvaljali kateri indikatorji so 
-useless oz neutralni, ne pa harmful kot v ta drugem
+	https://arxiv.org/pdf/2011.00756 - ugotovili da se ful izboljsa ce dodas pozicijo agenta oz v tem primeru robota v okolju v primerjavi z samo surovimi podatki iz senroejv. robotu so povedali relativno
+	kje v okolju je. ugotovili so tudi oz potrdili da random dodatni podatki robota onemogocajo in ga naredijo slabsega pri ucenju oz ne, ga naredi slabsega na zacetku, potem pa itak konvergira
+	v dolgem timeframeu je boljse ce jih "dodas" ne pa "deletas".  In general, a higher dropout rate makes the policy less effective: the average reward with the dropout rate 0.3 is 688.2, which is much smaller than the average score 2685.2 of the dropout rate 0.0. vec zgodovine kot mu dodas boljse 
+	to so ugotovili da so spreminjali do katerih obs channelov ima agent dostop
+	testirali so tudi to da so ga trainali na vec channelih, potem pa probali se enkrat tako da so enega po enega randomisali in videli kolko slabis je 
+	ugotovili so tudi da so podatki highly variable glede na platformo in oz kaj sploh hoces delat z RL	
 
-https://arxiv.org/pdf/2011.00756 - ugotovili da se ful izboljsa ce dodas pozicijo agenta oz v tem primeru robota v okolju v primerjavi z samo surovimi podatki iz senroejv. robotu so povedali relativno
-kje v okolju je. ugotovili so tudi oz potrdili da random dodatni podatki robota onemogocajo in ga naredijo slabsega pri ucenju oz ne, ga naredi slabsega na zacetku, potem pa itak konvergira
-v dolgem timeframeu je boljse ce jih "dodas" ne pa "deletas".  In general, a higher dropout rate makes the policy less effective: the average reward with the dropout rate 0.3 is 688.2, which is much smaller than the average score 2685.2 of the dropout rate 0.0. vec zgodovine kot mu dodas boljse 
-to so ugotovili da so spreminjali do katerih obs channelov ima agent dostop
-testirali so tudi to da so ga trainali na vec channelih, potem pa probali se enkrat tako da so enega po enega randomisali in videli kolko slabis je 
-ugotovili so tudi da so podatki highly variable glede na platformo in oz kaj sploh hoces delat z RL	
+	https://arxiv.org/pdf/2506.17518
+	kako ugotovit kateri podatki so dobri? v introtu da ce ima ful podatkov state space exposion je dejansko slabisi?? boljse je ce te podatke spremenis v manjse in bolj digestable in to feedas v RL. to pri meni ni 
+	lih problem ker so samo stevike, ni lih applicable zame
 
-https://arxiv.org/pdf/2506.17518
-kako ugotovit kateri podatki so dobri? v introtu da ce ima ful podatkov state space exposion je dejansko slabisi?? boljse je ce te podatke spremenis v manjse in bolj digestable in to feedas v RL. to pri meni ni 
-lih problem ker so samo stevike, ni lih applicable zame
+	https://www.sciencedirect.com/science/article/pii/S0888327020307846 - ig preberti to
+	lahko samo dan en value ki je sum prejsnjih 3 ma to bi blo unnecessary ig
+	how to give it context? s tem ig
 
-https://www.sciencedirect.com/science/article/pii/S0888327020307846 - ig preberti to
-lahko samo dan en value ki je sum prejsnjih 3 ma to bi blo unnecessary ig
-how to give it context? s tem ig
-
-found out that giving it context greatly increased efficiency, that it is better to add not delete metrics in obs and that removing some doesnt even net you anything and that the most damming is adding in random noise and not adding addititonal metrics
+	found out that giving it context greatly increased efficiency, that it is better to add not delete metrics in obs and that removing some doesnt even net you anything and that the most damming is adding in random noise and not adding addititonal metrics
 
 LTSM AND RNN:
 	found out that LSTM isnt really useful for SAC because of its replay buffer. Every env step, you push one of these tuples in. When it's time to train, you randomly sample a batch of these tuples. perhaps the reward 		and stuff has changed from taht time that the thing could learn from it	
@@ -57,20 +56,15 @@ LTSM AND RNN:
 	RNN and LSTM is for sequences where u cannot hardcode the pattern. where the pattern is too complex or too long for the human to hard code. regardless of length, regardles of how long the relevant window is. 
 	tbf i can make an experiment with RNN, LSTM, adding features or just one last price
 
-# turn absolute prices into relative movement — this IS "where he is relative to before"
-change_1 = price_t2 - price_t3   # did it rise or fall, 3→2 steps ago
-change_2 = price_t1 - price_t2   # did it rise or fall, 2→1 steps ago
-change_3 = price_t  - price_t1   # did it rise or fall, 1→now
 
-EXPERIMENT WITH ADDING AND REMOVING AND TESTING THE OBSERVATION SPACE AETTRIBUTES 
-    def _get_raw_obs(self):
-        if self.feature_set == "price_only":
-            return np.array([self.last_price])
-        elif self.feature_set == "price_volume":
-            return np.array([self.last_price, self.volume])
-        elif self.feature_set == "price_volume_vol":
-            return np.array([self.last_price, self.volume, self.volatility])
-        # ... etc, mirroring your Model A-E tiers
+Handbook to computational economics:
+	23	Hommes — Heterogeneous Agent Models (tractable few-type models)	cendef.uva.nl/.../chhomwechap2006.pdf
+	24	LeBaron — Agent-Based Computational Finance (survey, SF-ASM etc.)	people.brandeis.edu/~blebaron/wps/hbook.pdf
+
+	23. FUNDAMENTALISTS: they know the "true value of the stock" and buy when its below and sell when its above, CHARTISTS are trend followers
+	J is the rate of change, C is the proportion of the market held by chartists (speculative), F excess demand for stock by Fundamentalists (real)
+	J3−(C−C0​)−F=0 CRASH
+	C0 is a baseline / reference level for chartist proportion — think of it as "the normal, average share of trend-following traders in the market when things are calm
 
 implementaj performance metrics (Sharpe ratio, Sortino ratio, Maximum drawdown, Volatility, Win rate, Profit factor, Turnover, Transaction costs, Slippage, Average holding time, Inventory exposure, Number of trades)
 https://www.reddit.com/r/quant/comments/1fe27in/what_metrics_do_you_use_to_testoptimize_and/
@@ -78,18 +72,10 @@ https://github.com/ebrahimpichka/quant-perf-measures
 
 naredi boljse trading bote - googlaj to Agent-Based Computational Finance poglej si downloadal dva cpatera useful
 
-23	Hommes — Heterogeneous Agent Models (tractable few-type models)	cendef.uva.nl/.../chhomwechap2006.pdf
-24	LeBaron — Agent-Based Computational Finance (survey, SF-ASM etc.)	people.brandeis.edu/~blebaron/wps/hbook.pdf
-
-23. FUNDAMENTALISTS: they know the "true value of the stock" and buy when its below and sell when its above, CHARTISTS are trend followers
-J is the rate of change, C is the proportion of the market held by chartists (speculative), F excess demand for stock by Fundamentalists (real)
-J3−(C−C0​)−F=0 CRASH
-C0 is a baseline / reference level for chartist proportion — think of it as "the normal, average share of trend-following traders in the market when things are calm
-
 uglavnem googlaj state representation reinforcement learning TO
 
 naredi boljso dokumentacijo
-nauci se git
+dodaj nesinhrono delovanje
 dodaj latency, dodaj cancelling
 naredi event queue, configurable latency, cash in stock reservation
 actually se nauci osnove RL in ML tipo statistiko in to 
