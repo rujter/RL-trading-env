@@ -1,3 +1,14 @@
 __pycache__/
 *.pyc
 token.txt
+
+# Ignore a folder named 'my_folder' anywhere in the project
+venv/
+testing/
+
+chapter23.pdf
+chapter24.pdf
+pricematcher.py
+roadmap.txt
+startingup.txt
+SuttonBartoIPRLBook2ndEd.pdf
