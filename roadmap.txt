@@ -12,6 +12,7 @@ read some articles on improving the observational space
 20.9 researched LSTM and RNN a bit and decided on the upgrade of OBS, got an idea to test the difference and impact of every observable attribute on the effecacy of the RL model, found sources to
 read to improve my trading simulation agents
 21.9 added and debugged the graphs, made functionality to test multiple parameters in one file and combined envs. The trader seems to be less volatile, less profitable when i added OBS functionality of additional past 2 prices, implemenmted sharpe ratio
+22. added historical env, but it needs fixing. I learned what episode and learn is 
 
 obs notes:
 	https://arxiv.org/html/2411.07585v1#S4:

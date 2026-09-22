@@ -18,6 +18,7 @@ def main():
     # 2. Train SAC agent (SAC uses built-in ent_coef entropy exploration instead of epsilon-decay)
     agent = SAC("MlpPolicy", env, seed=SEED, verbose=1, ent_coef="auto", learning_rate=0.0005)
     agent.learn(total_timesteps=17200, log_interval=1) #to doloci kolko casa traja oz how many steps
+    #najprej learna
 
     xpoints = np.array([])
     ypoints = np.array([])
@@ -33,8 +34,10 @@ def main():
 
     global_step = 0
     episode_starts = []
+
+    episodenum = 50
     
-    while True:
+    for i in range(episodenum): #to je potem evaluation
         episode_starts.append(global_step + 1)
         obs, info = env.reset()
         ep_reward = 0.0
@@ -86,7 +89,7 @@ def main():
                 shares = env.portfolio.holdings.get(env.stock.id, 0)
                 
                 print(
-                    f"Episode {episode:<3} | steps: {ep_steps:<5} | "
+                    f"Episode {episodenum:<3} | steps: {ep_steps:<5} | "
                     f"final price: ${price:.2f} | cash: ${cash:.2f} | shares: {shares:.0f} | "
                     f"ep_reward: {ep_reward:.2f} | portfolioVal: ${info.get('val', 0.0):.2f}"
                 )

@@ -38,8 +38,6 @@ if isinstance(df_single.columns, pd.MultiIndex):
 
 portfolios = {}
 
-#
-
 class Environment(gym.Env):
 
     def __init__(self,
@@ -74,6 +72,7 @@ class Environment(gym.Env):
         qty = self.portfolio.holdings.get(self.stock.id, 0)
         holdings_ratio = (qty * close.iloc[i]) / self.startingcash
 
+        
         return np.array([
             price_change,
             price_change2,
@@ -86,6 +85,8 @@ class Environment(gym.Env):
     def reset(self, seed= None, options = None):
         super().reset(seed=seed)
 
+        randomnum = random.randint(1,171)
+
         self.portfolio = Portfolio(id=self.id, cash=self.startingcash)
         portfolios[self.id] = self.portfolio 
 
@@ -93,7 +94,7 @@ class Environment(gym.Env):
         self.price_change2 = 0
         self.price_change3 = 0
 
-        self.gl_counter = 0
+        self.gl_counter = randomnum
 
         return self._get_obs(), {}
     
@@ -178,7 +179,7 @@ class Environment(gym.Env):
             "price": float(priceref),
         }
 
-        
+        info = { "reward": float(reward), "ordernum": float(ordernum), "val": float(self._portfolio_value()), "price": df_single["Close"].iloc[self.gl_counter-1]}
         return self._get_obs(), reward, terminated, truncated, info
 
     def render(self):
