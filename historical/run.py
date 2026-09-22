@@ -17,8 +17,11 @@ def main():
 
     # 2. Train SAC agent (SAC uses built-in ent_coef entropy exploration instead of epsilon-decay)
     agent = SAC("MlpPolicy", env, seed=SEED, verbose=1, ent_coef="auto", learning_rate=0.0005)
+    #agent = SAC.load("SAVED MODEL, env=env")
     agent.learn(total_timesteps=17200, log_interval=1) #to doloci kolko casa traja oz how many steps
     #najprej learna
+
+    #agent.save("SAVED MODEL")
 
     xpoints = np.array([])
     ypoints = np.array([])

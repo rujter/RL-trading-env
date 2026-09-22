@@ -17,8 +17,11 @@ def main():
 
     # 2. Train SAC agent (SAC uses built-in ent_coef entropy exploration instead of epsilon-decay)
     agent = PPO("MlpPolicy", env, seed=SEED, verbose=1, ent_coef=0.05, learning_rate=0.0005)
+    #agent = SAC.load("SAVED MODEL, env=env")
+
     agent.learn(total_timesteps=1000000, log_interval=1)
 
+    #agent.save("SAVED MODEL")
 
     # 3. Evaluation step — run multiple episodes so the plot spans ~10k steps
     num_eval_episodes = 1000  # 100 episodes * 1000 steps/episode = 10,0000 steps total
