@@ -16,12 +16,8 @@ def main():
     check_env(env)
 
     # 2. Train SAC agent (SAC uses built-in ent_coef entropy exploration instead of epsilon-decay)
-    agent = SAC("MlpPolicy", env, seed=SEED, verbose=1, ent_coef=0.05, learning_rate=0.0005)
-    agent.learn(total_timesteps=100000, log_interval=1)
-
-
-    # 3. Evaluation step — run multiple episodes so the plot spans ~10k steps
-    num_eval_episodes = 1000  # 100 episodes * 1000 steps/episode = 10,0000 steps total
+    agent = SAC("MlpPolicy", env, seed=SEED, verbose=1, ent_coef="auto", learning_rate=0.0005)
+    agent.learn(total_timesteps=17200, log_interval=1) #to doloci kolko casa traja oz how many steps
 
     xpoints = np.array([])
     ypoints = np.array([])
@@ -38,7 +34,7 @@ def main():
     global_step = 0
     episode_starts = []
     
-    for episode in range(num_eval_episodes):
+    while True:
         episode_starts.append(global_step + 1)
         obs, info = env.reset()
         ep_reward = 0.0
@@ -49,10 +45,14 @@ def main():
             ep_steps += 1
 
             action, _states = agent.predict(obs, deterministic=True)
+
+            if ep_steps < 10:
+                print(f"STEP {ep_steps} | action = {action}")
+
             obs, reward, terminated, truncated, info = env.step(action)
             ep_reward += reward
 
-            price = env.last_trade_price
+            price = info.get("price")
 
             xpoints = np.append(xpoints, global_step)
             ypoints = np.append(ypoints, price)
@@ -84,13 +84,13 @@ def main():
 
                 cash = env.portfolio.cash
                 shares = env.portfolio.holdings.get(env.stock.id, 0)
-                """
+                
                 print(
                     f"Episode {episode:<3} | steps: {ep_steps:<5} | "
                     f"final price: ${price:.2f} | cash: ${cash:.2f} | shares: {shares:.0f} | "
                     f"ep_reward: {ep_reward:.2f} | portfolioVal: ${info.get('val', 0.0):.2f}"
                 )
-                """
+                
                 break
 
     env.close()

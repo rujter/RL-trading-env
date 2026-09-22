@@ -110,8 +110,9 @@ class Environment(gym.Env):
         order_action = "hold"
 
         #calculating what action the agent will take
-        transaction_fee = 0.0005
+        transaction_fee = 0.00005
         required_cash = df_single["Close"].iloc[self.gl_counter] * (1 + transaction_fee)
+
 
         if act < -0.05 and self.portfolio.holdings != None and self.portfolio.holdings.get(self.stock.id, 0) > 0:
             order_action = "sell"
@@ -152,19 +153,32 @@ class Environment(gym.Env):
                 if self.portfolio.holdings[self.stock.id] == 0:
                     del self.portfolio.holdings[self.stock.id]
 
-        value_after = self._portfolio_value()
         self.gl_counter += 1
 
-        reward = (value_after - value_before) / 1000
+        terminated = False
+        truncated = self.gl_counter >= len(df_single) - 1
 
-        terminated = bool(self._portfolio_value() <= 1)
- 
-        truncated = self.gl_counter >= len(df_single)-1
+        # Calculate portfolio value at NEW market price
+        value_after = self._portfolio_value()
+
+        # Reward from portfolio change
+        reward = (value_after - value_before) / self.startingcash
+
         ordernum = 0
-        if order_action == "buy": ordernum = 1
-        elif order_action == "sell": ordernum = 2
 
-        info = { "reward": float(reward), "ordernum": float(ordernum), "val": float(self._portfolio_value()), "price": df_single["Close"].iloc[self.gl_counter]}
+        if order_action == "buy":
+            ordernum = 1
+        elif order_action == "sell":
+            ordernum = 2
+
+        info = {
+            "reward": float(reward),
+            "ordernum": float(ordernum),
+            "val": float(value_after),
+            "price": float(priceref),
+        }
+
+        
         return self._get_obs(), reward, terminated, truncated, info
 
     def render(self):
