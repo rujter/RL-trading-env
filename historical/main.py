@@ -7,6 +7,7 @@ import numpy as np
 import random
 import pandas as pd
 from collections import deque
+import math
 
 from Classes import Portfolio, Stock, PPinpoint, Order, next_order_id, nextId
 SEED = 34
@@ -54,8 +55,11 @@ class Environment(gym.Env):
         self.stock = Stock(id = "META", pricepoint=None, name="META", borderArr=None, sofferArr=None)
 
         #setting up the enviroment for the agent
-        self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(6,), dtype=np.float32)
+        self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(7,), dtype=np.float32)
         self.action_space = spaces.Box(-1, 1, (1,), dtype=np.float32)
+
+        self.epsilon_prev = 0
+        self.prevvolatiltiy = 0
 
     def _get_obs(self):
         close = df_single["Close"]
@@ -71,7 +75,10 @@ class Environment(gym.Env):
         cash_ratio = self.portfolio.cash / self.startingcash
         qty = self.portfolio.holdings.get(self.stock.id, 0)
         holdings_ratio = (qty * close.iloc[i]) / self.startingcash
-
+        
+        self.epsilon_prev = (self.last_trade_price - self.price_before_step) / self.price_before_step
+        volatility =  math.sqrt(0.00001+  0.07 * math.pow(self.epsilon_prev, 2) + 0.90 * math.pow(self.prevvolatiltiy, 2))
+        self.prevvolatiltiy = volatility
         
         return np.array([
             price_change,
@@ -79,7 +86,8 @@ class Environment(gym.Env):
             price_change3,
             spread,
             cash_ratio,
-            holdings_ratio
+            holdings_ratio,
+            volatility
         ], dtype=np.float32)
 
     def reset(self, seed= None, options = None):
@@ -95,6 +103,9 @@ class Environment(gym.Env):
         self.price_change3 = 0
 
         self.gl_counter = randomnum
+
+        self.prevvolatiltiy = 0
+        self.epsilon_prev = 0
 
         return self._get_obs(), {}
     

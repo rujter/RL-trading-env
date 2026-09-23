@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import math
 
 data = np.load("eval_results.npz")
+
 xpoints = data["xpoints"]
 ypoints = data["ypoints"]
 buy_x, buy_y = data["buy_x"], data["buy_y"]

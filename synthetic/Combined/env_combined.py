@@ -3,7 +3,8 @@ from gymnasium import spaces
 import numpy as np
 from collections import deque
 import random
-from Tradingbots import momentum_trader_step, mean_reversion_trader, noise_trader_step
+from Tradingbots import momentum_trader_step, mean_reversion_trader, noise_trader_step, GBM_trader_step, Ornstein_trader_step
+import math
 
 # Import shared models from Classes
 from Classes import Portfolio, Stock, PPinpoint, Order, portfolios, next_order_id, nextId
@@ -48,11 +49,19 @@ class Environment(gym.Env):
         self.noise_id_1 = 9001
         self.momentum = 9002
         self.meantrader = 9003
+        self.ultrader = 9004
+        self.GMUtrader = 9005
+
         portfolios[self.noise_id_1] = Portfolio(id=self.noise_id_1, cash=1_000_000, holdings={self.stock.id: 1_000_000})
         portfolios[self.momentum] = Portfolio(id=self.momentum, cash=1_000_000, holdings={self.stock.id: 1_000_000})
         portfolios[self.meantrader] = Portfolio(id=self.meantrader, cash=1_000_000, holdings={self.stock.id: 1_000_000})
+        portfolios[self.ultrader] = Portfolio(id=self.ultrader, cash=1_000_000, holdings={self.stock.id: 1_000_000})
+        portfolios[self.GMUtrader] = Portfolio(id=self.GMUtrader, cash=1_000_000, holdings={self.stock.id: 1_000_000})
+
         self.mean = 0
         self.count = 0
+        self.prevvolatiltiy = 0
+        self.epsilon_prev = 0
 
         #parameters and experimental stuff
         self.addedOBS = True
@@ -70,11 +79,12 @@ class Environment(gym.Env):
         #setting up the enviroment for the agent
         self.action_space = spaces.Box(-1, 1, (1,), dtype=np.float32)
 
-        if not self.addedOBS: self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(4,), dtype=np.float32)
-        else: self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(6,), dtype=np.float32)
+        if not self.addedOBS: self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(5,), dtype=np.float32)
+        else: self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(7,), dtype=np.float32)
 
 
     def _get_obs(self):
+
         best_bid = (self.stock.pricepoint.highestindx / 100.0) if self.stock.pricepoint.highestindx != -1 else self.last_trade_price
         best_ask = (self.stock.pricepoint.lowestindx / 100.0) if self.stock.pricepoint.lowestindx != -1 else self.last_trade_price
 
@@ -97,19 +107,26 @@ class Environment(gym.Env):
         qty = self.portfolio.holdings.get(self.stock.id, 0)
         holdings_ratio = (qty * self.last_trade_price) / self.startingcash
 
+        #calculated using garch
+        self.epsilon_prev = (self.last_trade_price - self.price_before_step) / self.price_before_step
+        volatility =  math.sqrt(0.00001+  0.07 * math.pow(self.epsilon_prev, 2) + 0.90 * math.pow(self.prevvolatiltiy, 2))
+        self.prevvolatiltiy = volatility
+
         if self.addedOBS: return np.array([
             price_change,      # ~ -0.05 to +0.05 (Directional momentum)
             price_change2,
             price_change3,
             spread,            # ~ 0.000 to 0.050 (Order book depth/liquidity)
             cash_ratio,        # ~ 0.000 to 1.000+ (Available buying power)
-            holdings_ratio     # ~ 0.000 to 1.000+ (Current market exposure)
+            holdings_ratio,    # ~ 0.000 to 1.000+ (Current market exposure)
+            volatility
         ], dtype=np.float32)
         else: return np.array([
             price_change,      # ~ -0.05 to +0.05 (Directional momentum)
             spread,            # ~ 0.000 to 0.050 (Order book depth/liquidity)
             cash_ratio,        # ~ 0.000 to 1.000+ (Available buying power)
-            holdings_ratio     # ~ 0.000 to 1.000+ (Current market exposure)
+            holdings_ratio,     # ~ 0.000 to 1.000+ (Current market exposure)
+            volatility
         ], dtype=np.float32)
  
     def _portfolio_value(self):
@@ -138,6 +155,8 @@ class Environment(gym.Env):
 
         self.mean = 0
         self.count = 0
+        self.epsilon_prev = 0
+        self.prevvolatiltiy = 0
  
         return self._get_obs(), {}
 
@@ -157,17 +176,23 @@ class Environment(gym.Env):
                     
         return False
 
+
     def step(self, action):
 
-        #price before this step is the last price the stock was traded at
+        count+=1 #count of steps in the episode to calculate the mean
+
+        self.mean = self.mean + 0.5 * (self.last_trade_price - self.mean) #calculating the mean, EWMA
+
         self.price_before_step = self.last_trade_price   
         value_before = self._portfolio_value()
 
-        for i in range (1):
-            momentum_trader_step(self, self.momentum)
-            self.mean, self.count = mean_reversion_trader(self, self.meantrader, self.mean, self.count)
-        noise_trader_step(self, self.noise_id_1)  
 
+        momentum_trader_step(self, self.momentum)
+        self.count = mean_reversion_trader(self, self.meantrader, self.mean, self.count)
+        self.count = Ornstein_trader_step(self, self.ultrader, self.mean, self.count)
+        noise_trader_step(self, self.noise_id_1) 
+        GBM_trader_step(self, self.GMUtrader)
+        
         act = float(action[0]) if hasattr(action, "__len__") else float(action)
         order_action = "hold"
 
@@ -232,6 +257,8 @@ class Environment(gym.Env):
         reward = (value_after - value_before) / 1000
 
         self.step_count += 1
+        self.count = 0
+        self.mean = 0
 
         #checking the networth of the player each step
         no_cash = self.portfolio.cash <= 0
