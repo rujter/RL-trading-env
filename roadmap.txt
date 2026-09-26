@@ -15,6 +15,7 @@ read to improve my trading simulation agents
 22.9 added historical env, it works. I learned what episode and learn is. learned how to save trained models. added an OU median reversion bot
 23.9 learned GBM, Ornstein, garch, jump diffusion with merton, organised the roadmap. implemented GBM trader, updated mean calculation, added EWMA mean caluclation, added GARCH to OBS, merton
 24.9 learned some diff eq (linear vs non linear with tylor and 1 & 2 order) from scratch based on ito and GBM. 
+26.9 learned all linear second and first order diff eq and made notes to udnerstand ito and GBM. understanding the derivation of ito and GBM. understand merton jump and udnerlying poisson
 
 
 OBS IN STATE REPRESENTATION:
