@@ -51,12 +51,14 @@ class Environment(gym.Env):
         self.meantrader = 9003
         self.ultrader = 9004
         self.GMUtrader = 9005
+        self.GMUandMertontrader = 9006
 
         portfolios[self.noise_id_1] = Portfolio(id=self.noise_id_1, cash=1_000_000, holdings={self.stock.id: 1_000_000})
         portfolios[self.momentum] = Portfolio(id=self.momentum, cash=1_000_000, holdings={self.stock.id: 1_000_000})
         portfolios[self.meantrader] = Portfolio(id=self.meantrader, cash=1_000_000, holdings={self.stock.id: 1_000_000})
         portfolios[self.ultrader] = Portfolio(id=self.ultrader, cash=1_000_000, holdings={self.stock.id: 1_000_000})
         portfolios[self.GMUtrader] = Portfolio(id=self.GMUtrader, cash=1_000_000, holdings={self.stock.id: 1_000_000})
+        portfolios[self.GMUandMertontrader] = Portfolio(id=self.GMUandMertontrader, cash=1_000_000, holdings={self.stock.id: 1_000_000})
 
         self.mean = 0
         self.count = 0
@@ -141,6 +143,11 @@ class Environment(gym.Env):
         portfolios[self.id] = self.portfolio 
         portfolios[self.noise_id_1] = Portfolio(id=self.noise_id_1, cash=1_000_000, holdings={self.stock.id: 1_000_000})
         portfolios[self.momentum] = Portfolio(id=self.momentum, cash=1_000_000, holdings={self.stock.id: 1_000_000})
+        portfolios[self.meantrader] = Portfolio(id=self.meantrader, cash=1_000_000, holdings={self.stock.id: 1_000_000})
+        portfolios[self.ultrader] = Portfolio(id=self.ultrader, cash=1_000_000, holdings={self.stock.id: 1_000_000})
+        portfolios[self.GMUtrader] = Portfolio(id=self.GMUtrader, cash=1_000_000, holdings={self.stock.id: 1_000_000})
+        portfolios[self.GMUandMertontrader] = Portfolio(id=self.GMUandMertontrader, cash=1_000_000, holdings={self.stock.id: 1_000_000})
+
         self.stock.borderArr = [None] * self.array_size
         self.stock.sofferArr = [None] * self.array_size
         self.stock.pricepoint.highestindx = -1
@@ -192,6 +199,7 @@ class Environment(gym.Env):
         self.count = Ornstein_trader_step(self, self.ultrader, self.mean, self.count)
         noise_trader_step(self, self.noise_id_1) 
         GBM_trader_step(self, self.GMUtrader)
+        self.GMUandMertontrader(self, self.GMUandMertontrader)
         
         act = float(action[0]) if hasattr(action, "__len__") else float(action)
         order_action = "hold"

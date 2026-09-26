@@ -134,3 +134,57 @@ def GBM_trader_step(env, portfolio_id, mu = 0.05, sigma = 0.2, dt = 1):
               marketorlimit=1, stock_id=env.stock.id, portfolio_id=portfolio_id)
 
     env.LimitGOrder(o, env.stock)
+
+def poisson(lam, dt, n):
+    return ((lam * dt) ** n * math.exp(-lam * dt)) / math.factorial(n)
+
+def GBMandMerton_trader_step(env, portfolio_id, mu = 0.05, sigma = 0.2, dt = 1):
+
+    currprice = env.last_trade_price
+
+    Z = random.gauss(0, 1)
+
+    lam = 0.005 #expected num of jumps per 
+    sigma_j = 0.02
+    mu_j = -0.05 
+
+    k = math.exp(mu_j + 0.5 * (sigma_j**2)) - 1
+    Yi = random.gauss(mu, sigma**2)
+
+    u = random.random()
+    Nt = 0
+    cumulat = poisson(lam, dt, 0)
+
+    #how many jumps in ts step
+    while u > cumulat:
+        Nt += 1
+        cumulat += poisson(lam, dt, Nt)
+
+    mertonsum = 0
+    if Nt > 0:mertonsum = random.gauss(Nt * mu_j, math.sqrt(Nt) * sigma_j)
+
+    predicted_next_price = currprice * math.exp(((mu - lam * k) - 0.5 * (sigma**2)) * dt + sigma * math.sqrt(dt) * Z + mertonsum)
+    predicted_change = predicted_next_price - currprice
+
+    threshold = 0.5  # vsak episode 1000 steps torej 5 na episode
+
+    if predicted_change < -threshold:
+        action = "sell"
+    elif predicted_change > threshold:
+        action = "buy"
+    else:
+        action = "hold"
+
+
+    qty = min(20, max(1, int(abs(predicted_change)))) 
+
+    price_ref = env.last_trade_price if env.last_trade_price > 0 else startingprice
+    price_offset = random.uniform(-0.5, 0.5)
+    price = price_ref + price_offset
+    max_valid_price = (env.array_size - 1) / 100 
+    price = max(0.01, min(price, max_valid_price))
+
+    o = Order(next_order_id(action == "buy"), price, qty,
+              marketorlimit=1, stock_id=env.stock.id, portfolio_id=portfolio_id)
+
+    env.LimitGOrder(o, env.stock)
