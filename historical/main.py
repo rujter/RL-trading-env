@@ -12,11 +12,11 @@ import math
 from Classes import Portfolio, Stock, PPinpoint, Order, next_order_id, nextId
 SEED = 34
 
-end_date = datetime(year=2026, month=9, day=10)
-start_date = datetime(year=2026, month=1, day=1)
+end_date = datetime(year=2024, month=9, day=10)
+start_date = datetime(year=2024, month=1, day=1)
 
 # set the name of the ticker we want to download market data for
-ticker = "META"
+ticker = "NVDA"
 
 # download market data for a single ticker
 df_single = yf.download(
@@ -42,20 +42,21 @@ portfolios = {}
 class Environment(gym.Env):
 
     def __init__(self,
-                 startingcash = 1000,
+                 startingcash = 10000,
                  id = 1):
         
         super().__init__()
         self.gl_counter = 0
         self.id = id
         self.startingcash = startingcash
+        self.lossq = 0
 
         portfolios[self.id] = Portfolio(id = self.id, cash = startingcash, holdings=None)
         self.portfolio = portfolios[self.id]
         self.stock = Stock(id = "META", pricepoint=None, name="META", borderArr=None, sofferArr=None)
 
         #setting up the enviroment for the agent
-        self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(7,), dtype=np.float32)
+        self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(8,), dtype=np.float32)
         self.action_space = spaces.Box(-1, 1, (1,), dtype=np.float32)
 
         self.epsilon_prev = 0
@@ -70,14 +71,25 @@ class Environment(gym.Env):
         price_change = 0.0 if i == 0 else (close.iloc[i] - close.iloc[i-1]) / close.iloc[i-1]
         price_change2 = 0.0 if i < 2 else (close.iloc[i-1] - close.iloc[i-2]) / close.iloc[i-2]
         price_change3 = 0.0 if i < 3 else (close.iloc[i-2] - close.iloc[i-3]) / close.iloc[i-3]
+
+
+        if i == 0: re = 0.0
+        else: re = (close.iloc[i] - close.iloc[i - 1]) / close.iloc[i - 1]
+
+        self.lossq = self.lossq = (self.lossq * 0.5) + (min(0, re) ** 2)
+
         spread = (high.iloc[i] - low.iloc[i]) / close.iloc[i]
 
         cash_ratio = self.portfolio.cash / self.startingcash
         qty = self.portfolio.holdings.get(self.stock.id, 0)
         holdings_ratio = (qty * close.iloc[i]) / self.startingcash
-        
-        self.epsilon_prev = (self.last_trade_price - self.price_before_step) / self.price_before_step
-        volatility =  math.sqrt(0.00001+  0.07 * math.pow(self.epsilon_prev, 2) + 0.90 * math.pow(self.prevvolatiltiy, 2))
+
+        lasttrade = close.iloc[i]
+        lasttrade1 = close.iloc[i - 1] if i >= 1 else close.iloc[0]
+
+        self.epsilon_prev = (lasttrade - lasttrade1) / lasttrade1 if lasttrade1 > 0 else 0
+
+        volatility =  math.sqrt(0.00001+  0.07 * self.epsilon_prev**2 + 0.90 * self.prevvolatiltiy**2)
         self.prevvolatiltiy = volatility
         
         return np.array([
@@ -87,13 +99,16 @@ class Environment(gym.Env):
             spread,
             cash_ratio,
             holdings_ratio,
-            volatility
+            volatility,
+            self.portfolio.cash,
+            ##self.lossq
         ], dtype=np.float32)
 
     def reset(self, seed= None, options = None):
         super().reset(seed=seed)
 
-        randomnum = random.randint(1,171)
+        max_start = max(1, len(df_single) - 20)
+        randomnum = random.randint(1, min(171, max_start))
 
         self.portfolio = Portfolio(id=self.id, cash=self.startingcash)
         portfolios[self.id] = self.portfolio 
@@ -106,6 +121,7 @@ class Environment(gym.Env):
 
         self.prevvolatiltiy = 0
         self.epsilon_prev = 0
+        self.lossq = 0
 
         return self._get_obs(), {}
     
@@ -116,54 +132,72 @@ class Environment(gym.Env):
     
     
     def step(self, action):
+
+        mintrade = 300
         value_before = self._portfolio_value()
 
         act = float(action[0]) if hasattr(action, "__len__") else float(action)
         order_action = "hold"
 
         #calculating what action the agent will take
-        transaction_fee = 0.00005
-        required_cash = df_single["Close"].iloc[self.gl_counter] * (1 + transaction_fee)
-
 
         if act < -0.05 and self.portfolio.holdings != None and self.portfolio.holdings.get(self.stock.id, 0) > 0:
             order_action = "sell"
-        elif act > 0.05 and self.portfolio.cash >= required_cash:
+        elif act > 0.05 and self.portfolio.cash > 0: #dodaj tle fee
             order_action = "buy"
         else:
             order_action = "hold"
             
-        priceref = df_single["Close"].iloc[self.gl_counter]
+        #ali 3 eur ali 0.35%
+        transaction_fee = 0.0035
+        minfee = 3
         fee_factor = 1 + transaction_fee
+        rewarddock = 0
+        priceref = df_single["Close"].iloc[self.gl_counter]                
 
         num = min(1.0, abs(act))
         if order_action == "buy":
 
-            if self.portfolio.cash >= (priceref * fee_factor):
-                usable_cash = self.portfolio.cash / fee_factor
-                ordersize = int((num * usable_cash) // priceref)
-                if ordersize <= 0: ordersize = 1
+            ordersize = int((num * self.portfolio.cash) // priceref)
+            if ordersize <= 0: ordersize = 1
 
-                cost = ordersize * priceref
-                fee = cost * transaction_fee
-                self.portfolio.cash -= (cost + fee)
-                self.portfolio.holdings[self.stock.id] = self.portfolio.holdings.get(self.stock.id, 0) + ordersize
+            cost = ordersize*priceref
+
+            if (cost * fee_factor) <= minfee: fee = minfee
+            else: fee = cost*transaction_fee
+
+            #zdej pogledamo ce imamo dovolj denarja za ta order
+            if self.portfolio.cash*0.2 <= (ordersize * priceref + fee):
+
+                if self.portfolio.cash > ordersize*priceref+fee:
+                    self.portfolio.cash -= (cost + fee)
+                    self.portfolio.holdings[self.stock.id] = self.portfolio.holdings.get(self.stock.id, 0) + ordersize
+
+                else: order_action = "hold"
+            else: 
+                order_action = "hold"
 
         elif order_action == "sell": 
+
             current_holdings = self.portfolio.holdings.get(self.stock.id, 0)
 
             if current_holdings > 0:
-                priceref = df_single["Close"].iloc[self.gl_counter]                
                 ordersize = int(num * current_holdings)
 
                 if ordersize <= 0: ordersize = 1
 
-                proceeds = ordersize * priceref
-                fee = proceeds * transaction_fee
-                self.portfolio.cash += (proceeds - fee)
-                self.portfolio.holdings[self.stock.id] -= ordersize
-                if self.portfolio.holdings[self.stock.id] == 0:
-                    del self.portfolio.holdings[self.stock.id]
+                proceeds = ordersize * priceref #torej kolko zasluzis ce prodas
+
+                if proceeds >= mintrade:
+                    # Correct conditional logic
+                    fee = proceeds * transaction_fee if (proceeds * transaction_fee) >= 3 else 3.0
+
+                    self.portfolio.cash += (proceeds - fee)
+                    self.portfolio.holdings[self.stock.id] -= ordersize
+                    if self.portfolio.holdings[self.stock.id] == 0:
+                        del self.portfolio.holdings[self.stock.id]
+
+                else: order_action = "hold"
 
         self.gl_counter += 1
 
@@ -174,7 +208,7 @@ class Environment(gym.Env):
         value_after = self._portfolio_value()
 
         # Reward from portfolio change
-        reward = (value_after - value_before) / self.startingcash
+        reward = ((value_after - value_before) / self.startingcash) - rewarddock
 
         ordernum = 0
 
@@ -190,7 +224,6 @@ class Environment(gym.Env):
             "price": float(priceref),
         }
 
-        info = { "reward": float(reward), "ordernum": float(ordernum), "val": float(self._portfolio_value()), "price": df_single["Close"].iloc[self.gl_counter-1]}
         return self._get_obs(), reward, terminated, truncated, info
 
     def render(self):

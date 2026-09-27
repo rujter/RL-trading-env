@@ -12,16 +12,16 @@ import numpy as np
 def main():
     # 1. Instantiate & check Gymnasium compliance
     #you put the import after the thing
-    env = Environment(id=1, startingcash=1000.0)
+    env = Environment(id=1, startingcash=10000.0)
     check_env(env)
 
     # 2. Train SAC agent (SAC uses built-in ent_coef entropy exploration instead of epsilon-decay)
     agent = SAC("MlpPolicy", env, seed=SEED, verbose=1, ent_coef="auto", learning_rate=0.0005)
-    #agent = SAC.load("SAVED MODEL, env=env")
-    agent.learn(total_timesteps=17200, log_interval=1) #to doloci kolko casa traja oz how many steps
+    #agent = SAC.load("META YTD agent 200k", env=env)
+    agent.learn(total_timesteps=200000, log_interval=1) #to doloci kolko casa traja oz how many steps
     #najprej learna
 
-    #agent.save("SAVED MODEL")
+    agent.save("SAVED MODEL")
 
     xpoints = np.array([])
     ypoints = np.array([])

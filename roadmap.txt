@@ -15,9 +15,17 @@ read to improve my trading simulation agents
 22.9 added historical env, it works. I learned what episode and learn is. learned how to save trained models. added an OU median reversion bot
 23.9 learned GBM, Ornstein, garch, jump diffusion with merton, organised the roadmap. implemented GBM trader, updated mean calculation, added EWMA mean caluclation, added GARCH to OBS, merton
 24.9 learned some diff eq (linear vs non linear with tylor and 1 & 2 order) from scratch based on ito and GBM. 
-26.9 learned all linear second and first order diff eq and made notes to udnerstand ito and GBM. understanding the derivation of ito and GBM. understand merton jump and udnerlying poisson
+26.9 learned all linear second and first order diff eq and made notes to udnerstand ito and GBM. understand merton jump and udnerlying poisson. implemented merton trading bot. tweaked fee to 0.2 on meta stock 
+for historical and it was genuinely profitable 6.5%??? need to backtest on other examples.
 
-
+Historical:
+	backtestaj na drugih marketih
+	dodaj block bootstrapping
+	dodaj GBM, Jump diffusion in OU s tem da extractas volatility in noise iz realnih podatkov z dW ZA obs
+	TRAIN A neural network in past tickers and make it generate a new enviroment to trade in - research this
+	add garch to RNN as a forceast to model volatility and price!! why not both, testiraj impact
+	
+	
 OBS IN STATE REPRESENTATION:
 	https://arxiv.org/html/2411.07585v1#S4:
 	Our work examines and assesses 20 different technical indicators (using TA-Lib) as RL inputs and normalizes them utilizing a min/max scalar. The indicators that were used included SMA, OBV, Momentum, Stochastic Oscillator, MACD, CCI, ADX, TRIX, ROC, SAR, TEMA, TRIMA, WMA, DEMA, MFI, CMO, STOCHRSI, UO, BOP, 	and ATR - od tega poglej se kaj so in kaj so tisti referencani paperji odspodaj. basically so ugotvaljali kateri indikatorji so 
@@ -76,13 +84,9 @@ Performance metrics:
 TRADING BOTS:
 	naredi boljse trading bote - googlaj to Agent-Based Computational Finance poglej si downloadal dva cpatera useful
 	
-	Synthetic:
-	jump deffusion
-
 	Historic:
 	dodaj GBM, Jump diffusion in OU s tem da extractas volatility in noise iz realnih podatkov z dW
 	TRAIN A neural network in past tickers and make it generate a new enviroment to trade in - research this
-
 	add garch to RNN as a forceast to model volatility and price!! why not both, testiraj impact
 	
 	HANDBOOK TO COMP ECONOMICS
@@ -93,8 +97,6 @@ TRADING BOTS:
 	J is the rate of change, C is the proportion of the market held by chartists (speculative), F excess demand for stock by Fundamentalists (real)
 	J3−(C−C0​)−F=0 CRASH
 	C0 is a baseline / reference level for chartist proportion — think of it as "the normal, average share of trend-following traders in the market when things are calm
-
-
 
 EXTRA FEATURES
 	naredi boljso dokumentacijo
