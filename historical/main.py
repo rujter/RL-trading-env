@@ -85,7 +85,7 @@ class CustomCNN(BaseFeaturesExtractor):
 
 policy_kwargs = dict(
     features_extractor_class=CustomCNN,
-    features_extractor_kwargs=dict(4, 128), #kaksen dim ina dict  torej 4 al neki cash in to in other features za cene
+    features_extractor_kwargs=dict(independant=4, price=128), #kaksen dim ina dict  torej 4 al neki cash in to in other features za cene
 )
 
 ######################################## RNN FOR PPO ####################################################3
@@ -122,10 +122,8 @@ class CustomRNN(BaseFeaturesExtractor):
 
 policy_kwargs = dict(
     features_extractor_class=CustomRNN,
-    features_extractor_kwargs=dict(4, 64), #kaksen dim ina dict  torej 4 al neki cash in to in other features za cene
+    features_extractor_kwargs=dict(ind=4, price=64), #kaksen dim ina dict  torej 4 al neki cash in to in other features za cene
 )
-
-
 
 
 class Environment(gym.Env):

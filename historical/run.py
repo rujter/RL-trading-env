@@ -1,10 +1,10 @@
 import sys
 import os
 
-from stable_baselines3 import SAC
+from stable_baselines3 import SAC, PPO
 from stable_baselines3.common.env_checker import check_env
 #depends on what enviroment we're importing from
-from main import Environment, SEED, CustomCNN
+from main import Environment, SEED, CustomCNN, CustomRNN
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -15,15 +15,25 @@ def main():
     env = Environment(id=1, startingcash=10000.0)
     check_env(env)
 
+    
     policy_kwargs = dict(
         features_extractor_class=CustomCNN,
-        features_extractor_kwargs=dict(features_dim=128),
+        features_extractor_kwargs=dict(),
+    )
+
+    
+    policy_kwargs = dict(
+        features_extractor_class=CustomRNN,
+        features_extractor_kwargs=dict(),
     )
     
-    # 2. Train SAC agent (SAC uses built-in ent_coef entropy exploration instead of epsilon-decay)
-    #agent = SAC("MlpPolicy", env, seed=SEED, verbose=1, ent_coef="auto", policy_kwargs=policy_kwargs, learning_rate=0.0005)
-    agent = SAC("MlpPolicy", env, seed=SEED, verbose=1, ent_coef="auto", learning_rate=0.0005)
+
+    agent = PPO("MlpPolicy", env, seed=SEED, verbose=1, ent_coef=0.05, policy_kwargs=policy_kwargs, learning_rate=0.0005)
+    #agent = PPO("MlpPolicy", env, seed=SEED, verbose=1, ent_coef=0.05, learning_rate=0.0005)
+
+    #agent = SAC("MlpPolicy", env, seed=SEED, verbose=1, ent_coef="auto", learning_rate=0.0005)
     #agent = SAC.load("META YTD agent 200k", env=env)
+
     agent.learn(total_timesteps=200000, log_interval=1) #to doloci kolko casa traja oz how many steps
     #najprej learna
 

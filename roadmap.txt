@@ -23,7 +23,7 @@ read to improve my trading simulation agents
 27.9 added realistic fees (0.35% or 3eur flat), its not profitable at 1k, not even 10k. naredu sm da lhako kupi vsaj 20% od denarja ki ga ima in proda vsaj 300eur da ga feeji ne pozrejo. bomo vidli ce bo profitable
 in ce ni overfitting. 4.78%!! -5, nvda 12,76 22% nke -22 -40. added metric obs for lossq. however it underperforms heavily for bull markets. set a clear research path and cut the ML part entiry to focus on RL and go deep
 28.9 read chapoter 3 and 4 of SB RL, read and compared SAC, PPO, TD3, DQN and REINFORCE. updated knowlage of RNN, LTSM, GRU. decided to implement all of em and see whats better, learned what alphas and betas is
-29.9 read ML for AT, learned about CNNs, implemented one from documentation with gemini tweaks, i learned theory and can implement myself tho. implemented rnn
+29.9 read ML for AT, learned about CNNs, implemented one from documentation with gemini tweaks, i learned theory and can implement myself tho. implemented RNN.
 
 naredi 2d CNN z npr volatility in unim sranjem zraven
 implementaj lstm
