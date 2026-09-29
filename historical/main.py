@@ -47,12 +47,11 @@ from stable_baselines3 import PPO
 from stable_baselines3.common.torch_layers import BaseFeaturesExtractor
 
 
+
+
+############################################CNN FOR PPO/SAC ######################################
+
 class CustomCNN(BaseFeaturesExtractor):
-    """
-    :param observation_space: (gym.Space)
-    :param features_dim: (int) Number of features extracted.
-        This corresponds to the number of unit for the last layer.
-    """
 
     def __init__(self, observation_space: spaces.Box, features_dim: int = 128):
 
@@ -77,7 +76,7 @@ class CustomCNN(BaseFeaturesExtractor):
         priceobs = observations[:,: 4]
         ind = observations[:, 4:] #4 druge independant
 
-        priceobs = priceobs.unsqueeze(1)
+        priceobs = priceobs.unsqueeze(1) #dodas channel na indx 1
         cnnfeatue = self.cnn(priceobs)
         combined = th.cat([cnnfeatue, ind], dim=1)
 
@@ -86,8 +85,48 @@ class CustomCNN(BaseFeaturesExtractor):
 
 policy_kwargs = dict(
     features_extractor_class=CustomCNN,
-    features_extractor_kwargs=dict(4, features_dim=128), #kaksen dim ina dict  torej 4 al neki cash in to in other features za cene
+    features_extractor_kwargs=dict(4, 128), #kaksen dim ina dict  torej 4 al neki cash in to in other features za cene
 )
+
+######################################## RNN FOR PPO ####################################################3
+
+class CustomRNN(BaseFeaturesExtractor):
+
+    def __init__(self, observation_space: spaces.Box, features_dim: int = 128):
+
+        super().__init__(observation_space, features_dim)
+
+        #en input channel oz price data
+
+        self.rnn = nn.RNN(
+            4,
+            64,
+            1
+        )
+        self.linear = nn.Linear(68, features_dim)
+
+    def forward(self, observations: th.Tensor) -> th.Tensor:
+    
+        priceobs = observations[:,: 4]
+        ind = observations[:, 4:] #4 druge independant
+
+        priceobs = priceobs.unsqueeze(1) #dodas channel na indx 1
+
+        rnnfeature, _ = self.rnn(priceobs)
+        rnnfeature = rnnfeature.squeeze(1)
+
+        combined = th.cat([rnnfeature, ind], dim=1)
+
+        return self.linear(combined)
+
+
+policy_kwargs = dict(
+    features_extractor_class=CustomRNN,
+    features_extractor_kwargs=dict(4, 64), #kaksen dim ina dict  torej 4 al neki cash in to in other features za cene
+)
+
+
+
 
 class Environment(gym.Env):
 
@@ -101,7 +140,7 @@ class Environment(gym.Env):
         self.startingcash = startingcash
         self.lossq = 0
 
-        portfolios[self.id] = Portfolio(id = self.id, cash = startingcash, holdings=None)
+        portfolios[self.id] = Portfolio(id = self.id, cash = startingcash, holdings={})
         self.portfolio = portfolios[self.id]
         self.stock = Stock(id = "META", pricepoint=None, name="META", borderArr=None, sofferArr=None)
 
