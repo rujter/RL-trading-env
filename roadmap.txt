@@ -1,3 +1,7 @@
+Observation space engineering for financial reinforcement learning agents: synthetic and historical markets
+
+source venv/bin/activate
+
 roadmap: 
 11.9 naredu osnoven order book
 12.9 updatal order book, se naucil montecarlo, td in razlike med policy in value based decisionmaking
@@ -15,15 +19,123 @@ read to improve my trading simulation agents
 22.9 added historical env, it works. I learned what episode and learn is. learned how to save trained models. added an OU median reversion bot
 23.9 learned GBM, Ornstein, garch, jump diffusion with merton, organised the roadmap. implemented GBM trader, updated mean calculation, added EWMA mean caluclation, added GARCH to OBS, merton
 24.9 learned some diff eq (linear vs non linear with tylor and 1 & 2 order) from scratch based on ito and GBM. 
-26.9 learned all linear second and first order diff eq and made notes to udnerstand ito and GBM. understand merton jump and udnerlying poisson. implemented merton trading bot. tweaked fee to 0.2 on meta stock 
-for historical and it was genuinely profitable 6.5%??? need to backtest on other examples.
+26.9 learned all linear second and first order diff eq and made notes to udnerstand ito and GBM. understand merton jump and udnerlying poisson. implemented merton trading bot. tweaked fee to 0.2 on meta stock for historical and it was genuinely profitable 6.5%??? need to backtest on other examples. 
+27.9 added realistic fees (0.35% or 3eur flat), its not profitable at 1k, not even 10k. naredu sm da lhako kupi vsaj 20% od denarja ki ga ima in proda vsaj 300eur da ga feeji ne pozrejo. bomo vidli ce bo profitable
+in ce ni overfitting. 4.78%!! -5, nvda 12,76 22% nke -22 -40. added metric obs for lossq. however it underperforms heavily for bull markets. set a clear research path and cut the ML part entiry to focus on RL and go deep
+28.9 read chapoter 3 and 4 of SB RL, read and compared SAC, PPO, TD3, DQN and REINFORCE. updated knowlage of RNN, LTSM, GRU. decided to implement all of em and see whats better, learned what alphas and betas is
+29.9 learned about CNNs, implemented one from documentation with gemini tweaks
 
-Historical:
-	backtestaj na drugih marketih
-	dodaj block bootstrapping
-	dodaj GBM, Jump diffusion in OU s tem da extractas volatility in noise iz realnih podatkov z dW ZA obs
-	TRAIN A neural network in past tickers and make it generate a new enviroment to trade in - research this
-	add garch to RNN as a forceast to model volatility and price!! why not both, testiraj impact
+nauci se kaj pomenijo uni padding kernel etc
+file:///home/ruj/Downloads/Algorithmic_Financial_Trading_with_Deep_CNN_Preprint.pdf preberi
+poglej five Kenneth French
+stock_return_t = β_mkt · market_factor_t + β_smb · SMB_t + β_hml · HML_t + β_cma · CMA_t + β_rmw · RMW_t + ε_t
+https://stable-baselines3.readthedocs.io/en/master/guide/custom_policy.html - "Custom Feature Extractor"
+https://arxiv.org/abs/2104.06934
+
+poglej u se knjige in poglej kaj se da extractat najdej da js uporabim pol pa dejansko preberi
+naslednji dan: bascially use to implementaj in primerjaj malo
+mogoce spremeni reward da je risk ajusted
+penalise drawdowns
+add a penalty for holding when high volatility tipo nvda bear market
+ko je stagnant pac naredi da na trada
+designaj reward tako da bo to delal uglavnem pac kot uni meta strat brez tega
+
+Advances in Financial Machine Learning by Marcos López de Prado (Essential for financial data splitting, backtesting pitfalls, and feature engineering).
+Machine Learning for Algorithmic Trading by Stefan Jansen (Has dedicated chapters on Gym environments and RL trading agents). DEFINITIVNO PREBERI TO OZ VSAJ SKIM IN NAJDI IDEJE
+#######################################
+https://github.com/Jung132914/Deep-Reinforcement-Learning-for-Automated-Stock-Trading-Ensemble-Strategy-ICAIF-2020
+https://github.com/AI4Finance-Foundation/FinRL?utm_source=gemini
+
+uglavnem googlaj state representation reinforcement learning TO
+
+naredi meta rl ki ugotovi katerega bos runnal
+https://mohammadghavamzadeh.github.io/PUBLICATIONS/jaamas06.pdf
+https://arxiv.org/abs/1910.09508
+
+add garch to RNN as a forceast to model volatility and price!! why not both, testiraj impact
+https://docs.pytorch.org/tutorials/beginner/basics/quickstart_tutorial.html
+https://docs.pytorch.org/docs/2.14/generated/torch.nn.RNN.html
+
+nauci se actual pytorch za to
+
+fixaj to da ne delajo grafi
+
+
+backtestaj na drugih marketih
+dodaj block bootstrapping
+https://papers.ssrn.com/sol3/papers.cfm?abstract_id=4738996
+https://www.math.chalmers.se/~palbin/BootstrapDependentAndreasSunesson.pdf
+
+dodaj GBM, Jump diffusion in OU s tem da extractas volatility in noise iz realnih podatkov z dW ZA obs
+TRAIN A neural network in past tickers and make it generate a new enviroment to trade in - research this
+also add rolling window backtesting to be more specific
+
+implementaj performance metrics (Maximum drawdown, Volatility, Win rate, Profit factor, Turnover, Transaction costs, Slippage, Average holding time, Inventory exposure, Number of trades)
+https://www.reddit.com/r/quant/comments/1fe27in/what_metrics_do_you_use_to_testoptimize_and/
+https://github.com/ebrahimpichka/quant-perf-measures
+
+naredi boljse trading bote - googlaj to Agent-Based Computational Finance poglej si downloadal dva cpatera useful
+
+dodaj GBM, Jump diffusion in OU s tem da extractas volatility in noise iz realnih podatkov z dW
+TRAIN A neural network in past tickers and make it generate a new enviroment to trade in - research this
+add garch to RNN as a forceast to model volatility and price!! why not both, testiraj impact
+
+HANDBOOK TO COMP ECONOMICS
+23	Hommes — Heterogeneous Agent Models (tractable few-type models)	cendef.uva.nl/.../chhomwechap2006.pdf
+24	LeBaron — Agent-Based Computational Finance (survey, SF-ASM etc.)	people.brandeis.edu/~blebaron/wps/hbook.pdf
+
+23. FUNDAMENTALISTS: they know the "true value of the stock" and buy when its below and sell when its above, CHARTISTS are trend followers
+J is the rate of change, C is the proportion of the market held by chartists (speculative), F excess demand for stock by Fundamentalists (real)
+J3−(C−C0​)−F=0 CRASH
+C0 is a baseline / reference level for chartist proportion — think of it as "the normal, average share of trend-following traders in the market when things are calm
+
+naredi boljso dokumentacijo
+dodaj nesinhrono delovanje, to bo eno vecjih problemov, basically vec tradeov na step
+naredi event queue, configurable latency, cash in stock reservation
+	
+actually se nauci osnove RL in ML tipo statistiko in to 
+
+add shorting and black scholes
+
+train a rl model on synthetic data, diffrent models
+train a rl model on historical data, diffrent models
+
+backtest and test with diffrent starting capital, transaction fees, volatility, latency, num of traders, spread, initial inventory
+testiraj z razlicnimi seedi
+
+resources:
+https://youtu.be/VnpRp7ZglfA?si=a77DqOlLiQkp9wtx
+https://stable-baselines3.readthedocs.io/en/master/guide/custom_env.html
+https://stable-baselines3.readthedocs.io/en/master/guide/rl_tips.html
+https://gymnasium.farama.org/tutorials/gymnasium_basics/environment_creation/#sphx-glr-tutorials-gymnasium-basics-environment-creation-py
+https://gym-trading-env.readthedocs.io/en/latest/
+https://stable-baselines3.readthedocs.io/en/master/modules/sac.html !!!!!!!!!!!!!
+https://arxiv.org/pdf/2110.14771
+https://arxiv.org/pdf/1912.04941
+https://people.brandeis.edu/~blebaron/wps/hbook.pdf
+file:///home/ruj/Downloads/chhomwechap2006.pdf
+
+Books to read
+https://themlbook.com/wiki/doku.php
+A Primer for the Mathematics of Financial Engineeringx¸
+http://lib.ysu.am/disciplines_bk/2b66030e0dd4c77b2bda437f6c1e5e66.pdf
+
+
+CNN:
+	they find edges or corners in their receptive fields (small area of input) 
+	the next layers then merge them
+	
+	a kernel is put on the overlapping part of pictures, local patterns
+	this then gets multiplied with a filter and produces a number 
+	filter values are learned from training
+	
+	the stride is how many pixels or whatever to shift every scan
+	each depth slide specialises in detecting something
+	dodas non linear transformation umes med layerje da ne more it vse v en linear function in da vsak layer naredi svoje
+	
+	for time series data it should be fed sequentially not jumbles
+	they first trained it pretrained so?perhaps pretrain and then implement
+	LSTM and CNN are mutually exclusive za isti data. nemores oz brezeveze imet dva razlicna pogleda za isti data istocasno v obs
 	
 	
 OBS IN STATE REPRESENTATION:
@@ -47,9 +159,6 @@ OBS IN STATE REPRESENTATION:
 	how to give it context? s tem ig
 
 	found out that giving it context greatly increased efficiency, that it is better to add not delete metrics in obs and that removing some doesnt even net you anything and that the most damming is adding in random noise and not adding addititonal metrics
-	
-	TO DO
-		uglavnem googlaj state representation reinforcement learning TO
 
 
 LTSM AND RNN:
@@ -73,80 +182,151 @@ LTSM AND RNN:
 	RNN and LSTM is for sequences where u cannot hardcode the pattern. where the pattern is too complex or too long for the human to hard code. regardless of length, regardles of how long the relevant window is. 
 	tbf i can make an experiment with RNN, LSTM, adding features or just one last price
 
+	3BLUE1BROWN:
+		gpt is generative pre trained transformer
+		transformer- takes in stuff and predicts whats next with probability distribution	
+		take a random sample, append and predict again
+		basically uno ko usak pove neko besedo za nadeljevanje zgodbe. tako kot SAC ni deterministicen
+		
+	RNN:  (IBM VIDEO GOAT)
+		yt input, xt output. ima hidden state ht. remembers prev states from hidden state. ht carries what the network has elarned from prev inputs- dependencies in data
+		yt = mu ( wy ht +c)
+		ht = mu ( wx xt + wh ht-1 + b) b is bias term
+		
+		each step it gets input and ht-1
+		ima razlicne nacine lahko samo eno stvar returna,. lahko 2 etc
+		
+		neuron pa sum of x w + b baseline oz base term
+		problemi? vanishing gradient pozabi kaj se je prej zgodilo
+		exploding gradient
+		
+	LTSM:
+		ima poleg hidden statea se cell state ki je kao long term memory
+		ht je short term memory
+		
+		LTSM Ima 3 0,1 gatee
+		forget gate: poglej x in ht-1 in se odloci ce naj si to zapomne
+		input gate: what new info in long term mem $c_t = (f_t \odot c_{t-1}) + (i_t \odot \tilde{c}_t)$.
+		output gate: what should short term memory outout ht be rn filters c1
+		??? kaj
+		
+		LSTM: allows a neural network to rememer the stuff it needs but also forget stuff not longer applicable
+		
+		"MY NAME I" CE POGLEDAMO NAZAJ JA je "s" + pac etc etc
+		
+		IMA INPUT: procesira: output
+		output is provided with the input in the next step
+		dodamo internal state? 
+		
+		state je dodaten cell: 
+		1. forget gate:  kaj pozabit
+		2. input gate: kaj dodat
+		3. output gate: kaj z vsem kaj je storano kaj outputat
+		
+		martin is buying apples
+		martin - m, 
+		apples - plural
+		 
+		output sproti daja podatke ht brez da brise etc current podatek
+		ko pride nek she ugotovi da je podobno alice in to outputa da je to strong connection in shrani she blizu alice
+		
+		$$f_t = \sigma\left(W_f x_t + U_f h_{t-1} + b_f\right)$$		forget
+		$$i_t = \sigma\left(W_i x_t + U_i h_{t-1} + b_i\right)$$ 		input
+		$$\tilde{c}_t = \tanh\left(W_c x_t + U_c h_{t-1} + b_c\right)$$		ct"
+		$$c_t = f_t \odot c_{t-1} + i_t \odot \tilde{c}_t$$			ct update cell state
+		$$o_t = \sigma\left(W_o x_t + U_o h_{t-1} + b_o\right)$$$$
+		h_t = o_t \odot \tanh(c_t)$$
+		
+	GRU:
+		ima v staet samo 2 gatea:
+		
+		reset gate: How much past memory should I ignore when computing new candidate information?" ko temp je reset 0 
+		Update Gate ($z_t$): Combines the roles of LSTM's Forget and Input gates—decides how much of the previous state to keep vs. how much new candidate state to blend in. ce je z visok da not. 
+		space je limited tako da v ht napise tudi state
+		
+		ko pa pride she je r visok in linka se to tako kot LTSM
+		
+		nima dodatnega cell statea
+		HIDDEN STATE JE SESTAVLJEN IZ TEH
+		poglej enacbe
+		
+	ALPHAS AND BETAS
+		
+		alphas: 
+			performance on a risk ajustment bases
+			retujrn of smp = 10% alpha = 0
+			
+			fund1:  alpha 2.5 torej 12.5%
+			fund2: alpha -1	torej 9%		
+		
+		
+		beta: 
+		
+		[-1,2] ce je beta 1 pomeni da je highly correlated to smp500, ce je -1 ni coorelated ne pomeni da je slabo al dobro. ce je -1 je inverse, 1.5 50% more volatile than market
+		$$\beta = \frac{\text{Cov}(R_i, R_m)}{\text{Var}(R_m)}$$ 
+		covariance je ce linear relationship
+		
+Sutton Bartol:
+	3 chapter:
+	policiy is stochanistic rule to select acitons
 
-Performance metrics:
-	Sharpe ratio je basically return od portfolio torej tipo avg return od profitabilitja/std od teh profitabilitijev torej kolko se gibajo gor pa dol
-	implementaj performance metrics (Maximum drawdown, Volatility, Win rate, Profit factor, Turnover, Transaction costs, Slippage, Average holding time, Inventory exposure, Number of trades)
-	https://www.reddit.com/r/quant/comments/1fe27in/what_metrics_do_you_use_to_testoptimize_and/
-	https://github.com/ebrahimpichka/quant-perf-measures
+	actions can be any action we want to learn to take, states anything that could be useful in making them
+	anything that cannot be changed by the agent is the environment
+	"or example, one agent may make high-level decisions which form part of the states faced by a lower-level agent that implements the high-level decisions."
+	reward is for what you want achieved, not how you want it achieved!
+	RL follows a markov chain: everything that matters is the current state bc it alr summarises what happened with it one can predict all future steps
+	p(s,a|r,s') 
+	value functions estimate how good the agent is to be in the current state (future rewards) 3.10
+	q(s,a) je value of taking action a in state s following policiy (a|s)
+	if agent foloows policy pi and maintains a table for every state encountered then it will converge to vpi
+	if it follows -||- and maintains a table for every action and state encountered it will converge to qpi
+	but its hard to maintain this tables so 3.12 bellman equasion for vpi (expresses the relation between value and staet)
+	q is forced to take one and then pi eval
+	v is following pi eval
 
+	v* is optimal val func = max vpi(s) isto velja za q
+	poglej enacbe
+	v* = max qpi(s,a)
+	ko imas v* je lahko dobit optimal policy si samo greedy
 
-TRADING BOTS:
-	naredi boljse trading bote - googlaj to Agent-Based Computational Finance poglej si downloadal dva cpatera useful
-	
-	Historic:
-	dodaj GBM, Jump diffusion in OU s tem da extractas volatility in noise iz realnih podatkov z dW
-	TRAIN A neural network in past tickers and make it generate a new enviroment to trade in - research this
-	add garch to RNN as a forceast to model volatility and price!! why not both, testiraj impact
-	
-	HANDBOOK TO COMP ECONOMICS
-	23	Hommes — Heterogeneous Agent Models (tractable few-type models)	cendef.uva.nl/.../chhomwechap2006.pdf
-	24	LeBaron — Agent-Based Computational Finance (survey, SF-ASM etc.)	people.brandeis.edu/~blebaron/wps/hbook.pdf
+	4 chapter wasnt that useful to me
 
-	23. FUNDAMENTALISTS: they know the "true value of the stock" and buy when its below and sell when its above, CHARTISTS are trend followers
-	J is the rate of change, C is the proportion of the market held by chartists (speculative), F excess demand for stock by Fundamentalists (real)
-	J3−(C−C0​)−F=0 CRASH
-	C0 is a baseline / reference level for chartist proportion — think of it as "the normal, average share of trend-following traders in the market when things are calm
+ALGORITHM COMPARISON
+	both have policy probability where policy is the distribution
+	they output mean and std are gaussian
 
-EXTRA FEATURES
-	naredi boljso dokumentacijo
-	dodaj nesinhrono delovanje, to bo eno vecjih problemov, basically vec tradeov na step
-	naredi event queue, configurable latency, cash in stock reservation
-	
-	
-	
-actually se nauci osnove RL in ML tipo statistiko in to 
+	training tunes the mean and std
+	SAC:
+	OFF POLICY - ne samo iz curr data tudi replay buffer
+	entropy maximisation
+	critic is Q(a,s)
+	has actor: learns policy that selects actions (outputs distribution) torej ti da mean 30 in std 3 in uzami nek random value od tam
+	critics evaluate the quality of that decision
+	soft: doesnt maximise only rewards, encorages also exporation (added log term in the Q(a,s) runction
+	also has a replay buffer for exp storage
+	actor outputs distribution, critics evaluate state, replay buffer stores
 
-train a rl model on synthetic data, diffrent models
-train a rl model on historical data, diffrent models
+	TD3 je namesto probability determinsticen. when intereacting with the enviroment dodas noise ne entropy. preden calculatas Q(a,s)
+	to je pac da nevem ce se nekaj zgodi je Q table actorjev visok in expoita tako pa malo skewa
+	manj updata actorja
+	uporabi min val od criticov
+	ne da vn mean in std ampak raw value in dodas nek random noise da dobis to
 
-backtest and test with diffrent starting capital, transaction fees, volatility, latency, num of traders, spread, initial inventory
-testiraj z razlicnimi seedi
+	PPO:
+	it has new policiy clippage tipo now action je 3 ampak epsilon je 0.2 tako da je lahko max 1,2
+	critic is V(s) because on polciy HOW MUCH TOTAL REWARD CAN I EXPECT
+	on policy (learns from the current policy only, no replay buffer)
+	no entropy tuning (exporation)
+	less sample efficient 
+	fixed entropy coefficient
 
-Train a supervised model on historical data
-train a supervised on synthetic data
-Model A: price only
-Model B: price + volume
-Model C: price + volume + volatility
-Model D: price + volume + order-book imbalance
-Model E: everything + news
+	DQN:
+	no actor and no critic
+	greedy Q(s,a) tabular
+	exploraion is e greedy
+	discrete
 
-backtest
-
-compare each to RL
-
-use supervised model as an aditional metric for RL each thing: 
-1. supervised decides whether buy or sell, RL samo quantity
-2. supervised model je another metric weighted al neki
-
-
-resources:
-https://youtu.be/VnpRp7ZglfA?si=a77DqOlLiQkp9wtx
-
-https://stable-baselines3.readthedocs.io/en/master/guide/custom_env.html
-https://stable-baselines3.readthedocs.io/en/master/guide/rl_tips.html
-https://gymnasium.farama.org/tutorials/gymnasium_basics/environment_creation/#sphx-glr-tutorials-gymnasium-basics-environment-creation-py
-https://gym-trading-env.readthedocs.io/en/latest/
-
-https://stable-baselines3.readthedocs.io/en/master/modules/sac.html !!!!!!!!!!!!!
-
-https://arxiv.org/pdf/2110.14771
-https://arxiv.org/pdf/1912.04941
-
-https://people.brandeis.edu/~blebaron/wps/hbook.pdf
-file:///home/ruj/Downloads/chhomwechap2006.pdf
-
-Books to read
-https://themlbook.com/wiki/doku.php
-A Primer for the Mathematics of Financial Engineeringx¸
-http://lib.ysu.am/disciplines_bk/2b66030e0dd4c77b2bda437f6c1e5e66.pdf
+	REINFORCE:
+	actor only no critic
+	so pushing up the probability and argmax over that
+	only episodic non continous

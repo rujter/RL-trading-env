@@ -39,6 +39,56 @@ if isinstance(df_single.columns, pd.MultiIndex):
 
 portfolios = {}
 
+import torch as th
+import torch.nn as nn
+from gymnasium import spaces
+
+from stable_baselines3 import PPO
+from stable_baselines3.common.torch_layers import BaseFeaturesExtractor
+
+
+class CustomCNN(BaseFeaturesExtractor):
+    """
+    :param observation_space: (gym.Space)
+    :param features_dim: (int) Number of features extracted.
+        This corresponds to the number of unit for the last layer.
+    """
+
+    def __init__(self, observation_space: spaces.Box, features_dim: int = 128):
+
+        super().__init__(observation_space, features_dim)
+
+        #en input channel oz price data
+        self.cnn = nn.Sequential(
+            nn.Conv1d(1, 16, kernel_size=3,padding=1),
+            nn.ReLU(),
+            nn.Conv1d(16, 32, kernel_size=3,padding=1),
+            nn.ReLU(),
+            nn.Flatten(),
+        )
+
+        n_flatten = 132 #32 channels, 4 inpute za cene + 4 independant
+        self.linear = nn.Sequential(
+            nn.Linear(n_flatten, features_dim),
+            nn.ReLU()
+        )
+
+    def forward(self, observations: th.Tensor) -> th.Tensor:
+        priceobs = observations[:,: 4]
+        ind = observations[:, 4:] #4 druge independant
+
+        priceobs = priceobs.unsqueeze(1)
+        cnnfeatue = self.cnn(priceobs)
+        combined = th.cat([cnnfeatue, ind], dim=1)
+
+        return self.linear(combined)
+
+
+policy_kwargs = dict(
+    features_extractor_class=CustomCNN,
+    features_extractor_kwargs=dict(4, features_dim=128), #kaksen dim ina dict  torej 4 al neki cash in to in other features za cene
+)
+
 class Environment(gym.Env):
 
     def __init__(self,

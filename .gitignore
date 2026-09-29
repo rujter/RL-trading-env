@@ -1,13 +1,15 @@
-__pycache__/
 *.pyc
-token.txt
+*.zip
+*.png
+*.npz
+
 
 # Ignore a folder named 'my_folder' anywhere in the project
+extras/
+literature/
 venv/
-testing/
+__pycache__/
 
-chapter23.pdf
-chapter24.pdf
-pricematcher.py
-startingup.txt
-SuttonBartoIPRLBook2ndEd.pdf
+
+
+token.txt
