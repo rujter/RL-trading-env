@@ -12,11 +12,11 @@ import math
 from Classes import Portfolio, Stock, PPinpoint, Order, next_order_id, nextId
 SEED = 34
 
-end_date = datetime(year=2024, month=9, day=10)
-start_date = datetime(year=2024, month=1, day=1)
+end_date = datetime(year=2025, month=9, day=10)
+start_date = datetime(year=2025, month=1, day=1)
 
 # set the name of the ticker we want to download market data for
-ticker = "NVDA"
+ticker = "META"
 
 # download market data for a single ticker
 df_single = yf.download(
@@ -49,82 +49,97 @@ from stable_baselines3.common.torch_layers import BaseFeaturesExtractor
 
 
 
-############################################CNN FOR PPO/SAC ######################################
+############################################CNN FOR PPO/SAC ######################################ž
 
 class CustomCNN(BaseFeaturesExtractor):
 
-    def __init__(self, observation_space: spaces.Box, features_dim: int = 128):
+  def __init__(
+      self,
+      observation_space: spaces.Box,
+      features_dim: int = 128,
+      price_features: int = 4,
+      ind_features: int = 4,
+  ):
+    super().__init__(observation_space, features_dim)
 
-        super().__init__(observation_space, features_dim)
+    self.price_features = price_features
+    self.ind_features = ind_features
 
-        #en input channel oz price data
-        self.cnn = nn.Sequential(
-            nn.Conv1d(1, 16, kernel_size=3,padding=1),
-            nn.ReLU(),
-            nn.Conv1d(16, 32, kernel_size=3,padding=1),
-            nn.ReLU(),
-            nn.Flatten(),
-        )
+    self.cnn = nn.Sequential(
+        nn.Conv1d(in_channels=1, out_channels=16, kernel_size=3, padding=1), 
+        nn.ReLU(),
+        nn.Conv1d(in_channels=16, out_channels=32, kernel_size=3, padding=1),
+        nn.ReLU(),
+        nn.Flatten(),
+    )
 
-        n_flatten = 132 #32 channels, 4 inpute za cene + 4 independant
-        self.linear = nn.Sequential(
-            nn.Linear(n_flatten, features_dim),
-            nn.ReLU()
-        )
+    cnn_out_dim = 32 * price_features
+    total_concat_dim = cnn_out_dim + ind_features
 
-    def forward(self, observations: th.Tensor) -> th.Tensor:
-        priceobs = observations[:,: 4]
-        ind = observations[:, 4:] #4 druge independant
+    self.linear = nn.Sequential(
+        nn.Linear(total_concat_dim, features_dim), nn.ReLU()
+    )
 
-        priceobs = priceobs.unsqueeze(1) #dodas channel na indx 1
-        cnnfeatue = self.cnn(priceobs)
-        combined = th.cat([cnnfeatue, ind], dim=1)
+  def forward(self, observations: th.Tensor) -> th.Tensor:
+    priceobs = observations[:, : self.price_features].unsqueeze(1) 
+    ind = observations[:, self.price_features :] 
 
-        return self.linear(combined)
+    cnn_feat = self.cnn(priceobs)  
+    combined = th.cat([cnn_feat, ind], dim=1) 
 
-
-policy_kwargs = dict(
-    features_extractor_class=CustomCNN,
-    features_extractor_kwargs=dict(independant=4, price=128), #kaksen dim ina dict  torej 4 al neki cash in to in other features za cene
-)
+    return self.linear(combined)
 
 ######################################## RNN FOR PPO ####################################################3
 
 class CustomRNN(BaseFeaturesExtractor):
 
-    def __init__(self, observation_space: spaces.Box, features_dim: int = 128):
+    def __init__(
 
+        self,
+        observation_space: spaces.Box,
+        features_dim: int = 128,
+        price_features: int = 4,
+        ind_features: int = 4,
+        hidden_size: int = 64,
+    ):
         super().__init__(observation_space, features_dim)
 
-        #en input channel oz price data
+        self.price_features = price_features
+        self.ind_features = ind_features
 
-        self.rnn = nn.RNN(
-            4,
-            64,
-            1
+
+        self.rnn = nn.RNN(input_size=1, hidden_size=hidden_size, num_layers=1, batch_first=True)
+
+        total_concat_dim = hidden_size + ind_features
+        self.linear = nn.Sequential(
+            nn.Linear(total_concat_dim, features_dim), nn.ReLU()
         )
-        self.linear = nn.Linear(68, features_dim)
 
     def forward(self, observations: th.Tensor) -> th.Tensor:
-    
-        priceobs = observations[:,: 4]
-        ind = observations[:, 4:] #4 druge independant
+        priceobs = observations[:, : self.price_features].unsqueeze(-1)
+        ind = observations[:, self.price_features :] 
 
-        priceobs = priceobs.unsqueeze(1) #dodas channel na indx 1
+        rnn_out, h_n = self.rnn(priceobs)
+        last_hidden = h_n.squeeze(0)
 
-        rnnfeature, _ = self.rnn(priceobs)
-        rnnfeature = rnnfeature.squeeze(1)
-
-        combined = th.cat([rnnfeature, ind], dim=1)
-
+        combined = th.cat([last_hidden, ind], dim=1) 
         return self.linear(combined)
 
+policy_kwargs_def = None
 
-policy_kwargs = dict(
-    features_extractor_class=CustomRNN,
-    features_extractor_kwargs=dict(ind=4, price=64), #kaksen dim ina dict  torej 4 al neki cash in to in other features za cene
+policy_kwargs_cnn = dict(
+    features_extractor_class=CustomCNN,
+    features_extractor_kwargs=dict(
+        price_features=4, ind_features=4, features_dim=128
+    ),
 )
 
+policy_kwargs_rnn = dict(
+    features_extractor_class=CustomRNN,
+    features_extractor_kwargs=dict(
+        price_features=4, ind_features=4, hidden_size=64, features_dim=128
+    ),
+)
 
 class Environment(gym.Env):
 
@@ -187,7 +202,7 @@ class Environment(gym.Env):
             cash_ratio,
             holdings_ratio,
             volatility,
-            self.portfolio.cash,
+            self.portfolio.cash/self.startingcash,
             ##self.lossq
         ], dtype=np.float32)
 

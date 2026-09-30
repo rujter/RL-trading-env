@@ -4,7 +4,7 @@ import os
 from stable_baselines3 import SAC, PPO
 from stable_baselines3.common.env_checker import check_env
 #depends on what enviroment we're importing from
-from main import Environment, SEED, CustomCNN, CustomRNN
+from main import Environment, SEED, CustomCNN, CustomRNN, policy_kwargs_cnn, policy_kwargs_rnn, policy_kwargs_def
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -15,29 +15,20 @@ def main():
     env = Environment(id=1, startingcash=10000.0)
     check_env(env)
 
-    
-    policy_kwargs = dict(
-        features_extractor_class=CustomCNN,
-        features_extractor_kwargs=dict(),
-    )
+    #policy_kwargs_default = policy_kwargs_def
+    #policy_kwargs_default = policy_kwargs_rnn
+    #policy_kwargs_default = policy_kwargs_cnn
 
-    
-    policy_kwargs = dict(
-        features_extractor_class=CustomRNN,
-        features_extractor_kwargs=dict(),
-    )
-    
-
-    agent = PPO("MlpPolicy", env, seed=SEED, verbose=1, ent_coef=0.05, policy_kwargs=policy_kwargs, learning_rate=0.0005)
-    #agent = PPO("MlpPolicy", env, seed=SEED, verbose=1, ent_coef=0.05, learning_rate=0.0005)
+    #agent = PPO("MlpPolicy", env, seed=SEED, verbose=1, ent_coef=0.05, policy_kwargs=policy_kwargs_default, learning_rate=0.0005)
+    agent = PPO.load("cnn200kppo", env=env)
 
     #agent = SAC("MlpPolicy", env, seed=SEED, verbose=1, ent_coef="auto", learning_rate=0.0005)
     #agent = SAC.load("META YTD agent 200k", env=env)
 
-    agent.learn(total_timesteps=200000, log_interval=1) #to doloci kolko casa traja oz how many steps
+    #agent.learn(total_timesteps=100000, log_interval=1) #to doloci kolko casa traja oz how many steps
     #najprej learna
 
-    agent.save("SAVED MODEL")
+    #agent.save("cnn200kppo")
 
     xpoints = np.array([])
     ypoints = np.array([])
@@ -106,7 +97,7 @@ def main():
 
                 cash = env.portfolio.cash
                 shares = env.portfolio.holdings.get(env.stock.id, 0)
-                
+
                 print(
                     f"Episode {episodenum:<3} | steps: {ep_steps:<5} | "
                     f"final price: ${price:.2f} | cash: ${cash:.2f} | shares: {shares:.0f} | "
@@ -116,7 +107,7 @@ def main():
                 break
 
     env.close()
-
+    
     np.savez("eval_results.npz",
             xpoints=xpoints, ypoints=ypoints,
             buy_x=buy_x, buy_y=buy_y,
@@ -126,6 +117,6 @@ def main():
             csoffer_x=csoffer_x, csoffer_y=csoffer_y,
             episode_arr=episode_arr, profitabilitypercentage_arr=profitabilitypercentage_arr,
             episode_starts=np.array(episode_starts))
-
+    
 if __name__ == "__main__":
     main()

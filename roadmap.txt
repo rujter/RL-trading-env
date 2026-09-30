@@ -23,107 +23,110 @@ read to improve my trading simulation agents
 27.9 added realistic fees (0.35% or 3eur flat), its not profitable at 1k, not even 10k. naredu sm da lhako kupi vsaj 20% od denarja ki ga ima in proda vsaj 300eur da ga feeji ne pozrejo. bomo vidli ce bo profitable
 in ce ni overfitting. 4.78%!! -5, nvda 12,76 22% nke -22 -40. added metric obs for lossq. however it underperforms heavily for bull markets. set a clear research path and cut the ML part entiry to focus on RL and go deep
 28.9 read chapoter 3 and 4 of SB RL, read and compared SAC, PPO, TD3, DQN and REINFORCE. updated knowlage of RNN, LTSM, GRU. decided to implement all of em and see whats better, learned what alphas and betas is
-29.9 read ML for AT, learned about CNNs, implemented one from documentation with gemini tweaks, i learned theory and can implement myself tho. implemented RNN.
+29.9 read ML for AT, learned about CNNs, implemented one from documentation with gemini tweaks, i learned theory and can implement myself tho. implemented RNN. did diagram for the project. organised resources
+
+TO DO LIST:
+train models on 200k steps those 3
+fix graphs to see how much it sold and held
+fix resume
+update so its testing not on random starting point but whole 
+make an eval env diff from the learn env
+backtest on other stocks
+add metric that tells how many hold steps, how many buys and how many sells
 
 naredi 2d CNN z npr volatility in unim sranjem zraven
 implementaj lstm
-https://medium.com/@noorfatimaafzalbutt/recurrent-neural-networks-rnn-with-pytorch-a-complete-guide-8c40c69032d2
-
-file:///home/ruj/Downloads/Algorithmic_Financial_Trading_with_Deep_CNN_Preprint.pdf preberi
 poglej five Kenneth French
 stock_return_t = β_mkt · market_factor_t + β_smb · SMB_t + β_hml · HML_t + β_cma · CMA_t + β_rmw · RMW_t + ε_t
-https://stable-baselines3.readthedocs.io/en/master/guide/custom_policy.html - "Custom Feature Extractor"
-https://arxiv.org/abs/2104.06934
-
 poglej u se knjige in poglej kaj se da extractat najdej da js uporabim pol pa dejansko preberi
-naslednji dan: bascially use to implementaj in primerjaj malo
 mogoce spremeni reward da je risk ajusted
 penalise drawdowns
 add a penalty for holding when high volatility tipo nvda bear market
 ko je stagnant pac naredi da na trada
 designaj reward tako da bo to delal uglavnem pac kot uni meta strat brez tega
-
-Advances in Financial Machine Learning by Marcos López de Prado (Essential for financial data splitting, backtesting pitfalls, and feature engineering).
-Machine Learning for Algorithmic Trading by Stefan Jansen (Has dedicated chapters on Gym environments and RL trading agents). DEFINITIVNO PREBERI TO OZ VSAJ SKIM IN NAJDI IDEJE
-#######################################
-https://github.com/Jung132914/Deep-Reinforcement-Learning-for-Automated-Stock-Trading-Ensemble-Strategy-ICAIF-2020
-https://github.com/AI4Finance-Foundation/FinRL?utm_source=gemini
-
 uglavnem googlaj state representation reinforcement learning TO
-
 naredi meta rl ki ugotovi katerega bos runnal
-https://mohammadghavamzadeh.github.io/PUBLICATIONS/jaamas06.pdf
-https://arxiv.org/abs/1910.09508
-
 add garch to RNN as a forceast to model volatility and price!! why not both, testiraj impact
-https://docs.pytorch.org/tutorials/beginner/basics/quickstart_tutorial.html
-https://docs.pytorch.org/docs/2.14/generated/torch.nn.RNN.html
-
 nauci se actual pytorch za to
-
 fixaj to da ne delajo grafi
-
-
 backtestaj na drugih marketih
 dodaj block bootstrapping
-https://papers.ssrn.com/sol3/papers.cfm?abstract_id=4738996
-https://www.math.chalmers.se/~palbin/BootstrapDependentAndreasSunesson.pdf
-
 dodaj GBM, Jump diffusion in OU s tem da extractas volatility in noise iz realnih podatkov z dW ZA obs
 TRAIN A neural network in past tickers and make it generate a new enviroment to trade in - research this
 also add rolling window backtesting to be more specific
-
 implementaj performance metrics (Maximum drawdown, Volatility, Win rate, Profit factor, Turnover, Transaction costs, Slippage, Average holding time, Inventory exposure, Number of trades)
-https://www.reddit.com/r/quant/comments/1fe27in/what_metrics_do_you_use_to_testoptimize_and/
-https://github.com/ebrahimpichka/quant-perf-measures
-
 naredi boljse trading bote - googlaj to Agent-Based Computational Finance poglej si downloadal dva cpatera useful
-
 dodaj GBM, Jump diffusion in OU s tem da extractas volatility in noise iz realnih podatkov z dW
 TRAIN A neural network in past tickers and make it generate a new enviroment to trade in - research this
 add garch to RNN as a forceast to model volatility and price!! why not both, testiraj impact
-
-HANDBOOK TO COMP ECONOMICS
-23	Hommes — Heterogeneous Agent Models (tractable few-type models)	cendef.uva.nl/.../chhomwechap2006.pdf
-24	LeBaron — Agent-Based Computational Finance (survey, SF-ASM etc.)	people.brandeis.edu/~blebaron/wps/hbook.pdf
-
-23. FUNDAMENTALISTS: they know the "true value of the stock" and buy when its below and sell when its above, CHARTISTS are trend followers
-J is the rate of change, C is the proportion of the market held by chartists (speculative), F excess demand for stock by Fundamentalists (real)
-J3−(C−C0​)−F=0 CRASH
-C0 is a baseline / reference level for chartist proportion — think of it as "the normal, average share of trend-following traders in the market when things are calm
-
 naredi boljso dokumentacijo
 dodaj nesinhrono delovanje, to bo eno vecjih problemov, basically vec tradeov na step
 naredi event queue, configurable latency, cash in stock reservation
-	
 actually se nauci osnove RL in ML tipo statistiko in to 
-
 add shorting and black scholes
-
 train a rl model on synthetic data, diffrent models
 train a rl model on historical data, diffrent models
-
 backtest and test with diffrent starting capital, transaction fees, volatility, latency, num of traders, spread, initial inventory
 testiraj z razlicnimi seedi
 
-resources:
+RESOURCES
+OBS engineering:
+1 https://arxiv.org/html/2411.07585v1#S4:
+2 https://arxiv.org/pdf/2011.00756
+3 https://arxiv.org/pdf/2506.17518
+4 https://www.sciencedirect.com/science/article/pii/S0888327020307846
+
+Pytorch ML
+https://medium.com/@noorfatimaafzalbutt/recurrent-neural-networks-rnn-with-pytorch-a-complete-guide-8c40c69032d2
+file:///home/ruj/Downloads/Algorithmic_Financial_Trading_with_Deep_CNN_Preprint.pdf preberi
+https://arxiv.org/abs/2104.06934
+https://www.datacamp.com/tutorial/pytorch-cnn-tutorial
+
+Pytorch docs
+https://docs.pytorch.org/tutorials/beginner/basics/quickstart_tutorial.html
+https://docs.pytorch.org/docs/2.14/generated/torch.nn.RNN.html
+
+General RL:
 https://youtu.be/VnpRp7ZglfA?si=a77DqOlLiQkp9wtx
+
+SB3 docs:
 https://stable-baselines3.readthedocs.io/en/master/guide/custom_env.html
 https://stable-baselines3.readthedocs.io/en/master/guide/rl_tips.html
 https://gymnasium.farama.org/tutorials/gymnasium_basics/environment_creation/#sphx-glr-tutorials-gymnasium-basics-environment-creation-py
 https://gym-trading-env.readthedocs.io/en/latest/
 https://stable-baselines3.readthedocs.io/en/master/modules/sac.html !!!!!!!!!!!!!
+https://stable-baselines3.readthedocs.io/en/master/guide/custom_policy.html
+
+GYM ENV SIM:
 https://arxiv.org/pdf/2110.14771
 https://arxiv.org/pdf/1912.04941
 https://people.brandeis.edu/~blebaron/wps/hbook.pdf
 file:///home/ruj/Downloads/chhomwechap2006.pdf
+https://github.com/Jung132914/Deep-Reinforcement-Learning-for-Automated-Stock-Trading-Ensemble-Strategy-ICAIF-2020
+https://github.com/AI4Finance-Foundation/FinRL?utm_source=gemini
+people.brandeis.edu/~blebaron/wps/hbook.pdf
+cendef.uva.nl/.../chhomwechap2006.pdf
+
+Metrics performance:
+https://www.reddit.com/r/quant/comments/1fe27in/what_metrics_do_you_use_to_testoptimize_and/
+https://github.com/ebrahimpichka/quant-perf-measures
+
+Block bootstrapping:
+https://papers.ssrn.com/sol3/papers.cfm?abstract_id=4738996
+https://www.math.chalmers.se/~palbin/BootstrapDependentAndreasSunesson.pdf
+
+Multi agent:
+https://mohammadghavamzadeh.github.io/PUBLICATIONS/jaamas06.pdf
+https://arxiv.org/abs/1910.09508
 
 Books to read
 https://themlbook.com/wiki/doku.php
 A Primer for the Mathematics of Financial Engineeringx¸
 http://lib.ysu.am/disciplines_bk/2b66030e0dd4c77b2bda437f6c1e5e66.pdf
+Advances in Financial Machine Learning by Marcos López de Prado (Essential for financial data splitting, backtesting pitfalls, and feature engineering).
+Machine Learning for Algorithmic Trading by Stefan Jansen (Has dedicated chapters on Gym environments and RL trading agents). DEFINITIVNO PREBERI TO OZ VSAJ SKIM IN NAJDI IDEJE
 
-
+NOTES
 CNN:
 	they find edges or corners in their receptive fields (small area of input) 
 	the next layers then merge them
@@ -142,22 +145,23 @@ CNN:
 	
 	
 OBS IN STATE REPRESENTATION:
-	https://arxiv.org/html/2411.07585v1#S4:
+1)
 	Our work examines and assesses 20 different technical indicators (using TA-Lib) as RL inputs and normalizes them utilizing a min/max scalar. The indicators that were used included SMA, OBV, Momentum, Stochastic Oscillator, MACD, CCI, ADX, TRIX, ROC, SAR, TEMA, TRIMA, WMA, DEMA, MFI, CMO, STOCHRSI, UO, BOP, 	and ATR - od tega poglej se kaj so in kaj so tisti referencani paperji odspodaj. basically so ugotvaljali kateri indikatorji so 
 	useless oz neutralni, ne pa harmful kot v ta drugem
 
-	https://arxiv.org/pdf/2011.00756 - ugotovili da se ful izboljsa ce dodas pozicijo agenta oz v tem primeru robota v okolju v primerjavi z samo surovimi podatki iz senroejv. robotu so povedali relativno
+2)	
+	ugotovili da se ful izboljsa ce dodas pozicijo agenta oz v tem primeru robota v okolju v primerjavi z samo surovimi podatki iz senroejv. robotu so povedali relativno
 	kje v okolju je. ugotovili so tudi oz potrdili da random dodatni podatki robota onemogocajo in ga naredijo slabsega pri ucenju oz ne, ga naredi slabsega na zacetku, potem pa itak konvergira
 	v dolgem timeframeu je boljse ce jih "dodas" ne pa "deletas".  In general, a higher dropout rate makes the policy less effective: the average reward with the dropout rate 0.3 is 688.2, which is much smaller than the average score 2685.2 of the dropout rate 0.0. vec zgodovine kot mu dodas boljse 
 	to so ugotovili da so spreminjali do katerih obs channelov ima agent dostop
 	testirali so tudi to da so ga trainali na vec channelih, potem pa probali se enkrat tako da so enega po enega randomisali in videli kolko slabis je 
 	ugotovili so tudi da so podatki highly variable glede na platformo in oz kaj sploh hoces delat z RL	
 
-	https://arxiv.org/pdf/2506.17518
+3)
 	kako ugotovit kateri podatki so dobri? v introtu da ce ima ful podatkov state space exposion je dejansko slabisi?? boljse je ce te podatke spremenis v manjse in bolj digestable in to feedas v RL. to pri meni ni 
 	lih problem ker so samo stevike, ni lih applicable zame
 
-	https://www.sciencedirect.com/science/article/pii/S0888327020307846 - ig preberti to
+4)
 	lahko samo dan en value ki je sum prejsnjih 3 ma to bi blo unnecessary ig
 	how to give it context? s tem ig
 
@@ -165,109 +169,97 @@ OBS IN STATE REPRESENTATION:
 
 
 LTSM AND RNN:
-	found out that LSTM isnt really useful for SAC because of its replay buffer. Every env step, you push one of these tuples in. When it's time to train, you randomly sample a batch of these tuples. perhaps the reward 		and stuff has changed from taht time that the thing could learn from it	
+	found out that LSTM isnt really useful for SAC because of its replay buffer. Every env step, you push one of these tuples in. When it's time to train, you randomly sample a batch of these tuples. perhaps the reward 								and stuff has changed from taht time that the thing could learn from it	
 
 	Its a rype of RRN, short term dependencies in sequential data. LTSM HAS input, forget and output gates. 
 	h_t = tanh(W · [h_t-1, obs_t]) it depends on the alst datapoitn. 
 
 	LSTM has c, cell sssate, can store stuff. 
-	h, hidden state, what is relevant right now. it gets fed forward. For RNN everything gets mashed forward. LSTM has extra CELL state taht can store past stuff and decide if useful bc the 3 GATES. RNN doesnt have those 3 
-	gates
-	ate h_t is a vector of numbers — the network's running summary of everything
-	raw obs (window of 3 stock datapoints, any range per your Box)
-		↓
-	RNN (TemporalRNNExtractor) — processes the window, outputs a features_dim vector
-		↓
-	SAC's actor network (an MLP) — takes those features, outputs an action
-		↓
-	action gets applied in your env.step()
-
+	h, hidden state, what is relevant right now. it gets fed forward. For RNN everything gets mashed forward. LSTM has extra CELL state taht can store past stuff and decide if useful bc the 3 GATES. RNN doesnt have 
 	RNN and LSTM is for sequences where u cannot hardcode the pattern. where the pattern is too complex or too long for the human to hard code. regardless of length, regardles of how long the relevant window is. 
 	tbf i can make an experiment with RNN, LSTM, adding features or just one last price
 
-	3BLUE1BROWN:
-		gpt is generative pre trained transformer
-		transformer- takes in stuff and predicts whats next with probability distribution	
-		take a random sample, append and predict again
-		basically uno ko usak pove neko besedo za nadeljevanje zgodbe. tako kot SAC ni deterministicen
+3BLUE1BROWN:
+	gpt is generative pre trained transformer
+	transformer- takes in stuff and predicts whats next with probability distribution	
+	take a random sample, append and predict again
+	basically uno ko usak pove neko besedo za nadeljevanje zgodbe. tako kot SAC ni deterministicen
+	
+RNN:  (IBM VIDEO GOAT)
+	yt input, xt output. ima hidden state ht. remembers prev states from hidden state. ht carries what the network has elarned from prev inputs- dependencies in data
+	yt = mu ( wy ht +c)
+	ht = mu ( wx xt + wh ht-1 + b) b is bias term
+	
+	each step it gets input and ht-1
+	ima razlicne nacine lahko samo eno stvar returna,. lahko 2 etc
+	
+	neuron pa sum of x w + b baseline oz base term
+	problemi? vanishing gradient pozabi kaj se je prej zgodilo
+	exploding gradient
+	
+LTSM:
+	ima poleg hidden statea se cell state ki je kao long term memory
+	ht je short term memory
+	
+	LTSM Ima 3 0,1 gatee
+	forget gate: poglej x in ht-1 in se odloci ce naj si to zapomne
+	input gate: what new info in long term mem $c_t = (f_t \odot c_{t-1}) + (i_t \odot \tilde{c}_t)$.
+	output gate: what should short term memory outout ht be rn filters c1
+	??? kaj
+	
+	LSTM: allows a neural network to rememer the stuff it needs but also forget stuff not longer applicable
+	
+	"MY NAME I" CE POGLEDAMO NAZAJ JA je "s" + pac etc etc
+	
+	IMA INPUT: procesira: output
+	output is provided with the input in the next step
+	dodamo internal state? 
+	
+	state je dodaten cell: 
+	1. forget gate:  kaj pozabit
+	2. input gate: kaj dodat
+	3. output gate: kaj z vsem kaj je storano kaj outputat
+	
+	martin is buying apples
+	martin - m, 
+	apples - plural
+	 
+	output sproti daja podatke ht brez da brise etc current podatek
+	ko pride nek she ugotovi da je podobno alice in to outputa da je to strong connection in shrani she blizu alice
+	
+	$$f_t = \sigma\left(W_f x_t + U_f h_{t-1} + b_f\right)$$		forget
+	$$i_t = \sigma\left(W_i x_t + U_i h_{t-1} + b_i\right)$$ 		input
+	$$\tilde{c}_t = \tanh\left(W_c x_t + U_c h_{t-1} + b_c\right)$$		ct"
+	$$c_t = f_t \odot c_{t-1} + i_t \odot \tilde{c}_t$$			ct update cell state
+	$$o_t = \sigma\left(W_o x_t + U_o h_{t-1} + b_o\right)$$$$
+	h_t = o_t \odot \tanh(c_t)$$
+	
+GRU:
+	ima v staet samo 2 gatea:
+	
+	reset gate: How much past memory should I ignore when computing new candidate information?" ko temp je reset 0 
+	Update Gate ($z_t$): Combines the roles of LSTM's Forget and Input gates—decides how much of the previous state to keep vs. how much new candidate state to blend in. ce je z visok da not. 
+	space je limited tako da v ht napise tudi state
+	
+	ko pa pride she je r visok in linka se to tako kot LTSM
+	
+	nima dodatnega cell statea
+	HIDDEN STATE JE SESTAVLJEN IZ TEH
+	poglej enacbe
+	
+ALPHAS AND BETAS
+	
+	alphas: 
+		performance on a risk ajustment bases
+		retujrn of smp = 10% alpha = 0
 		
-	RNN:  (IBM VIDEO GOAT)
-		yt input, xt output. ima hidden state ht. remembers prev states from hidden state. ht carries what the network has elarned from prev inputs- dependencies in data
-		yt = mu ( wy ht +c)
-		ht = mu ( wx xt + wh ht-1 + b) b is bias term
-		
-		each step it gets input and ht-1
-		ima razlicne nacine lahko samo eno stvar returna,. lahko 2 etc
-		
-		neuron pa sum of x w + b baseline oz base term
-		problemi? vanishing gradient pozabi kaj se je prej zgodilo
-		exploding gradient
-		
-	LTSM:
-		ima poleg hidden statea se cell state ki je kao long term memory
-		ht je short term memory
-		
-		LTSM Ima 3 0,1 gatee
-		forget gate: poglej x in ht-1 in se odloci ce naj si to zapomne
-		input gate: what new info in long term mem $c_t = (f_t \odot c_{t-1}) + (i_t \odot \tilde{c}_t)$.
-		output gate: what should short term memory outout ht be rn filters c1
-		??? kaj
-		
-		LSTM: allows a neural network to rememer the stuff it needs but also forget stuff not longer applicable
-		
-		"MY NAME I" CE POGLEDAMO NAZAJ JA je "s" + pac etc etc
-		
-		IMA INPUT: procesira: output
-		output is provided with the input in the next step
-		dodamo internal state? 
-		
-		state je dodaten cell: 
-		1. forget gate:  kaj pozabit
-		2. input gate: kaj dodat
-		3. output gate: kaj z vsem kaj je storano kaj outputat
-		
-		martin is buying apples
-		martin - m, 
-		apples - plural
-		 
-		output sproti daja podatke ht brez da brise etc current podatek
-		ko pride nek she ugotovi da je podobno alice in to outputa da je to strong connection in shrani she blizu alice
-		
-		$$f_t = \sigma\left(W_f x_t + U_f h_{t-1} + b_f\right)$$		forget
-		$$i_t = \sigma\left(W_i x_t + U_i h_{t-1} + b_i\right)$$ 		input
-		$$\tilde{c}_t = \tanh\left(W_c x_t + U_c h_{t-1} + b_c\right)$$		ct"
-		$$c_t = f_t \odot c_{t-1} + i_t \odot \tilde{c}_t$$			ct update cell state
-		$$o_t = \sigma\left(W_o x_t + U_o h_{t-1} + b_o\right)$$$$
-		h_t = o_t \odot \tanh(c_t)$$
-		
-	GRU:
-		ima v staet samo 2 gatea:
-		
-		reset gate: How much past memory should I ignore when computing new candidate information?" ko temp je reset 0 
-		Update Gate ($z_t$): Combines the roles of LSTM's Forget and Input gates—decides how much of the previous state to keep vs. how much new candidate state to blend in. ce je z visok da not. 
-		space je limited tako da v ht napise tudi state
-		
-		ko pa pride she je r visok in linka se to tako kot LTSM
-		
-		nima dodatnega cell statea
-		HIDDEN STATE JE SESTAVLJEN IZ TEH
-		poglej enacbe
-		
-	ALPHAS AND BETAS
-		
-		alphas: 
-			performance on a risk ajustment bases
-			retujrn of smp = 10% alpha = 0
-			
-			fund1:  alpha 2.5 torej 12.5%
-			fund2: alpha -1	torej 9%		
-		
-		
-		beta: 
-		
-		[-1,2] ce je beta 1 pomeni da je highly correlated to smp500, ce je -1 ni coorelated ne pomeni da je slabo al dobro. ce je -1 je inverse, 1.5 50% more volatile than market
-		$$\beta = \frac{\text{Cov}(R_i, R_m)}{\text{Var}(R_m)}$$ 
-		covariance je ce linear relationship
+		fund1:  alpha 2.5 torej 12.5%
+		fund2: alpha -1	torej 9%		
+	beta: 
+	
+	[-1,2] ce je beta 1 pomeni da je highly correlated to smp500, ce je -1 ni coorelated ne pomeni da je slabo al dobro. ce je -1 je inverse, 1.5 50% more volatile than market
+	$$\beta = \frac{\text{Cov}(R_i, R_m)}{\text{Var}(R_m)}$$ 
+	covariance je ce linear relationship
 		
 Sutton Bartol:
 	3 chapter:

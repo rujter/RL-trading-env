@@ -28,6 +28,7 @@ sortino = (profitabilitypercentage_arr.mean() - T) / (downside_dev + 1e-8)
 down = np.minimum(0,profitabilitypercentage_arr)
 sortino = profitabilitypercentage_arr.mean() / down.std()
 
+'''
 plt.figure(figsize=(20, 6)) 
 plt.plot(xpoints, ypoints, label="price")
 for es in episode_starts:
@@ -52,6 +53,7 @@ plt.legend()
 plt.ylim(30, 70)
 plt.savefig("orders.png")
 plt.close()
+'''
 
 plt.figure(figsize=(20, 6)) 
 plt.text(0.02, 0.95, f"avg profitability: {avg_profitability:.2f}%", 
