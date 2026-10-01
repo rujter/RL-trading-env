@@ -3,8 +3,10 @@ import os
 
 from stable_baselines3 import SAC, PPO
 from stable_baselines3.common.env_checker import check_env
-#depends on what enviroment we're importing from
-from main import Environment, SEED, CustomCNN, CustomRNN, policy_kwargs_cnn, policy_kwargs_rnn, policy_kwargs_def
+
+#depends on what enviroment we're importing from, when trainign or testing uncomment 
+from training import Environment, SEED, CustomCNN, CustomRNN, policy_kwargs_cnn, policy_kwargs_rnn, policy_kwargs_def
+#from testing import Environment, SEED, CustomCNN, CustomRNN, policy_kwargs_cnn, policy_kwargs_rnn, policy_kwargs_def
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -15,20 +17,20 @@ def main():
     env = Environment(id=1, startingcash=10000.0)
     check_env(env)
 
-    #policy_kwargs_default = policy_kwargs_def
+    policy_kwargs_default = policy_kwargs_def
     #policy_kwargs_default = policy_kwargs_rnn
     #policy_kwargs_default = policy_kwargs_cnn
 
-    #agent = PPO("MlpPolicy", env, seed=SEED, verbose=1, ent_coef=0.05, policy_kwargs=policy_kwargs_default, learning_rate=0.0005)
-    agent = PPO.load("cnn200kppo", env=env)
+    agent = PPO("MlpPolicy", env, seed=SEED, verbose=1, ent_coef=0.05, policy_kwargs=policy_kwargs_default, learning_rate=0.0005)
+    #agent = PPO.load("cnn200kppo", env=env)
 
     #agent = SAC("MlpPolicy", env, seed=SEED, verbose=1, ent_coef="auto", learning_rate=0.0005)
     #agent = SAC.load("META YTD agent 200k", env=env)
 
-    #agent.learn(total_timesteps=100000, log_interval=1) #to doloci kolko casa traja oz how many steps
+    agent.learn(total_timesteps=100000, log_interval=1) #to doloci kolko casa traja oz how many steps
     #najprej learna
 
-    #agent.save("cnn200kppo")
+    agent.save("def100kppo")
 
     xpoints = np.array([])
     ypoints = np.array([])
@@ -76,12 +78,6 @@ def main():
             elif info.get("ordernum") == 2:
                 sell_x = np.append(sell_x, global_step)
                 sell_y = np.append(sell_y, price)
-            elif info.get("ordernum") == 3:
-                cborder_x = np.append(cborder_x, global_step)
-                cborder_y = np.append(cborder_y, price)
-            elif info.get("ordernum") == 4:
-                csoffer_x = np.append(csoffer_x, global_step)
-                csoffer_y = np.append(csoffer_y, price)
             else:
                 hold_x = np.append(hold_x, global_step)
                 hold_y = np.append(hold_y, price)
