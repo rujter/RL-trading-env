@@ -156,10 +156,10 @@ class Environment(gym.Env):
         self.portfolio = portfolios[self.id]
         self.stock = Stock(id = "META", pricepoint=None, name="META", borderArr=None, sofferArr=None)
 
-        self.pricesarray = deque([], maxlen=10)
+        self.pricesarray = deque([0,0,0,0,0,0,0,0,0,0], maxlen=10)
 
         #setting up the enviroment for the agent
-        self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(6,), dtype=np.float32)
+        self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(15,), dtype=np.float32)
         self.action_space = spaces.Box(-1, 1, (1,), dtype=np.float32)
 
         self.epsilon_prev = 0
@@ -193,18 +193,20 @@ class Environment(gym.Env):
         volatility =  math.sqrt(0.00001+  0.07 * self.epsilon_prev**2 + 0.90 * self.prevvolatiltiy**2)
         self.prevvolatiltiy = volatility
         
-        return np.array([
-            np.array(self.pricesarray),
-            spread,
-            cash_ratio,
-            holdings_ratio,
-            volatility,
-            self.portfolio.cash/self.startingcash,
-            ##self.lossq
-        ], dtype=np.float32)
+        return np.array(
+            list(self.pricesarray) + [
+                spread,
+                cash_ratio,
+                holdings_ratio,
+                volatility,
+                self.portfolio.cash / self.startingcash,
+                #lossq,
+            ],
+            dtype=np.float32
+        )
 
     def reset(self, seed= None, options = None):
-        super().reset(seed=seed)
+        super().reset(seed=seed, options=options)
 
 
         #KO TESTIRAS JE MAX START == 1
@@ -216,6 +218,7 @@ class Environment(gym.Env):
 
         self.price_change = 0
         self.pricesarray.clear()
+        self.pricesarray.extend([0.0] * 10)
 
         self.gl_counter = randomnum
 

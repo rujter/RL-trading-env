@@ -57,8 +57,8 @@ class CustomCNN(BaseFeaturesExtractor):
       self,
       observation_space: spaces.Box,
       features_dim: int = 128,
-      price_features: int = 4,
-      ind_features: int = 4,
+      price_features: int = 10,
+      ind_features: int = 5,
   ):
     super().__init__(observation_space, features_dim)
 
@@ -98,15 +98,14 @@ class CustomRNN(BaseFeaturesExtractor):
         self,
         observation_space: spaces.Box,
         features_dim: int = 128,
-        price_features: int = 4,
-        ind_features: int = 4,
+        price_features: int = 10,
+        ind_features: int = 5,
         hidden_size: int = 64,
     ):
         super().__init__(observation_space, features_dim)
 
         self.price_features = price_features
         self.ind_features = ind_features
-
 
         self.rnn = nn.RNN(input_size=1, hidden_size=hidden_size, num_layers=1, batch_first=True)
 
@@ -157,8 +156,10 @@ class Environment(gym.Env):
         self.portfolio = portfolios[self.id]
         self.stock = Stock(id = "META", pricepoint=None, name="META", borderArr=None, sofferArr=None)
 
+        self.pricesarray = deque([0,0,0,0,0,0,0,0,0,0], maxlen=10)
+
         #setting up the enviroment for the agent
-        self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(8,), dtype=np.float32)
+        self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(15,), dtype=np.float32)
         self.action_space = spaces.Box(-1, 1, (1,), dtype=np.float32)
 
         self.epsilon_prev = 0
@@ -171,9 +172,7 @@ class Environment(gym.Env):
         i = min(self.gl_counter, len(df_single) - 1)
 
         price_change = 0.0 if i == 0 else (close.iloc[i] - close.iloc[i-1]) / close.iloc[i-1]
-        price_change2 = 0.0 if i < 2 else (close.iloc[i-1] - close.iloc[i-2]) / close.iloc[i-2]
-        price_change3 = 0.0 if i < 3 else (close.iloc[i-2] - close.iloc[i-3]) / close.iloc[i-3]
-
+        self.pricesarray.append(price_change)
 
         if i == 0: re = 0.0
         else: re = (close.iloc[i] - close.iloc[i - 1]) / close.iloc[i - 1]
@@ -194,30 +193,30 @@ class Environment(gym.Env):
         volatility =  math.sqrt(0.00001+  0.07 * self.epsilon_prev**2 + 0.90 * self.prevvolatiltiy**2)
         self.prevvolatiltiy = volatility
         
-        return np.array([
-            price_change,
-            price_change2,
-            price_change3,
-            spread,
-            cash_ratio,
-            holdings_ratio,
-            volatility,
-            self.portfolio.cash/self.startingcash,
-            ##self.lossq
-        ], dtype=np.float32)
+        return np.array(
+            list(self.pricesarray) + [
+                spread,
+                cash_ratio,
+                holdings_ratio,
+                volatility,
+                self.portfolio.cash / self.startingcash,
+                #lossq,
+            ],
+            dtype=np.float32
+        )
 
     def reset(self, seed= None, options = None):
-        super().reset(seed=seed)
+        super().reset(seed=seed, options=options)
+
 
         self.portfolio = Portfolio(id=self.id, cash=self.startingcash)
         portfolios[self.id] = self.portfolio 
 
         self.price_change = 0
-        self.price_change2 = 0
-        self.price_change3 = 0
+        self.pricesarray.clear()
+        self.pricesarray.extend([0.0] * 10)
 
-        #diffrent than training, when testing always start from 1
-        self.gl_counter = 1
+        self.gl_counter = 1 #here its 1 to test the whole thing
 
         self.prevvolatiltiy = 0
         self.epsilon_prev = 0
