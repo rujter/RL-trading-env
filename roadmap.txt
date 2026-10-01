@@ -24,17 +24,15 @@ read to improve my trading simulation agents
 in ce ni overfitting. 4.78%!! -5, nvda 12,76 22% nke -22 -40. added metric obs for lossq. however it underperforms heavily for bull markets. set a clear research path and cut the ML part entiry to focus on RL and go deep
 28.9 read chapoter 3 and 4 of SB RL, read and compared SAC, PPO, TD3, DQN and REINFORCE. updated knowlage of RNN, LTSM, GRU. decided to implement all of em and see whats better, learned what alphas and betas is
 29.9 read ML for AT, learned about CNNs, implemented one from documentation with gemini tweaks, i learned theory and can implement myself tho. implemented RNN. did diagram for the project. organised resources
+1.10 fixed graphs, added deque for last prices, added functionality to graphs, ugotoivil da je graf za orderprice narobe samo med trainanjem, med testiranjem bi rabu bit ok
 
 TO DO LIST:
+preberi in poglej kaj sm dodal za reward function al pa pac naredi svojo z vec enotami
+naredi 2d convoltuion se z enim arrayem tako kot prices 
 train models on 200k steps those 3
-fix graphs to see how much it sold and held
 fix resume
-update so its testing not on random starting point but whole 
-make an eval env diff from the learn env
 backtest on other stocks
 add metric that tells how many hold steps, how many buys and how many sells
-
-naredi 2d CNN z npr volatility in unim sranjem zraven
 implementaj lstm
 poglej five Kenneth French
 stock_return_t = β_mkt · market_factor_t + β_smb · SMB_t + β_hml · HML_t + β_cma · CMA_t + β_rmw · RMW_t + ε_t
@@ -47,8 +45,6 @@ designaj reward tako da bo to delal uglavnem pac kot uni meta strat brez tega
 uglavnem googlaj state representation reinforcement learning TO
 naredi meta rl ki ugotovi katerega bos runnal
 add garch to RNN as a forceast to model volatility and price!! why not both, testiraj impact
-nauci se actual pytorch za to
-fixaj to da ne delajo grafi
 backtestaj na drugih marketih
 dodaj block bootstrapping
 dodaj GBM, Jump diffusion in OU s tem da extractas volatility in noise iz realnih podatkov z dW ZA obs
@@ -70,6 +66,11 @@ backtest and test with diffrent starting capital, transaction fees, volatility, 
 testiraj z razlicnimi seedi
 
 RESOURCES
+
+reward function engineering:
+https://arxiv.org/html/2506.04358v1
+https://quant.stackexchange.com/questions/84143/how-to-design-an-effective-reward-function-for-rl-based-fx-hedging-strategy
+
 OBS engineering:
 1 https://arxiv.org/html/2411.07585v1#S4:
 2 https://arxiv.org/pdf/2011.00756

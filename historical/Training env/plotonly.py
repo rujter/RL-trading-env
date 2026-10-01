@@ -28,7 +28,7 @@ sortino = (profitabilitypercentage_arr.mean() - T) / (downside_dev + 1e-8)
 down = np.minimum(0,profitabilitypercentage_arr)
 sortino = profitabilitypercentage_arr.mean() / down.std()
 
-
+#pricemovement
 plt.figure(figsize=(20, 6)) 
 plt.plot(xpoints, ypoints, label="price")
 for es in episode_starts:
@@ -41,9 +41,18 @@ plt.close()
 
 #orders
 plt.axhline(y=50, color='black', linestyle='--', alpha=0.5, label="starting price")
-plt.plot(buy_x, buy_y, linestyle='', marker='o', ms=2, mec='r', mfc='r', label="buy")
-plt.plot(sell_x, sell_y, linestyle='', marker='o', ms=2, mec='g', mfc='g', label="sell")
-plt.plot(hold_x, hold_y, linestyle='', marker='o', ms=2, mec='b', mfc='b', label="hold")
+plt.plot(buy_x, buy_y, linestyle='', marker='o', ms=5, mec='r', mfc='r', label="buy")
+plt.plot(sell_x, sell_y, linestyle='', marker='o', ms=5, mec='g', mfc='g', label="sell")
+plt.plot(hold_x, hold_y, linestyle='', marker='o', ms=1, mec='b', mfc='b', label="hold")
+
+plt.text(0.02, 0.5, f"numhold: {hold_x.size:.2f}", 
+        transform=plt.gca().transAxes, color='green', fontsize=10, va='top')
+
+plt.text(0.02, 0.45, f"buynum: {buy_x.size:.2f}", 
+        transform=plt.gca().transAxes, color='green', fontsize=10, va='top')
+
+plt.text(0.02, 0.40, f"numsell: {sell_x.size:.2f}", 
+        transform=plt.gca().transAxes, color='green', fontsize=10, va='top')
 
 print(hold_x)
 print("holdx\n")
@@ -53,7 +62,7 @@ plt.legend()
 plt.savefig("orders.png")
 plt.close()
 
-
+#profitability
 plt.figure(figsize=(20, 6)) 
 plt.text(0.02, 0.95, f"avg profitability: {avg_profitability:.2f}%", 
         transform=plt.gca().transAxes, color='green', fontsize=10, va='top')
