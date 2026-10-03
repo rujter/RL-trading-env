@@ -8,48 +8,37 @@ import random
 import pandas as pd
 from collections import deque
 import math
-
 from Classes import Portfolio, Stock, PPinpoint, Order, next_order_id, nextId
 SEED = 34
 
+portfolios = {}
 start_date = datetime(year=2021, month=1, day=1)
 end_date = datetime(year=2025, month=1, day=1)
-
-# set the name of the ticker we want to download market data for
+dataframe = pd.read_csv("cache.txt", header=[0,1], skiprows=[2], index_col=0)
 
 tickers = [
     # Strong uptrend (winners)
     "AAPL", "MSFT", "NVDA", "COST", "V",
-
     # Long decline or stagnation (losers / sideways)
     "INTC", "BA", "PFE", "VZ", "T", "KHC", "CVS", "NKE", "IBM",
-
     # Cyclical, big swings with regime changes
     "XOM", "CVX", "F", "GM", "CAT", "FCX",
-
     # Defensive, low volatility
     "KO", "PG", "JNJ", "DUK",
-
     # High volatility
     "TSLA", "AMD",
-
     # Broad ETFs and other asset classes
     "SPY", "QQQ", "GLD", "TLT",
 ]
-
 test_tickers = [
     # Uptrend
     "GOOGL", "HD",
-
     # Long decline or stagnation (the most important group)
     "DIS", "PYPL", "MMM", "CSCO",
-
     # Cyclical / financial
     "COP", "JPM", "DE",
-
     # Defensive
     "WMT", "PEP",
-
     # Broad ETFs and other asset classes
     "IWM", "EEM", "XLE",
 ]
@@ -60,128 +49,13 @@ globalctr = 0
 if tort: ticker = tickers[globalctr]
 else: ticker = test_tickers[random.randint(0,13)]
 
-portfolios = {}
 
-import torch as th
-import torch.nn as nn
-from gymnasium import spaces
-
-from stable_baselines3 import PPO
-from stable_baselines3.common.torch_layers import BaseFeaturesExtractor
-
-
-
-
-############################################CNN FOR PPO/SAC ######################################ž
-
-class CustomCNN(BaseFeaturesExtractor):
-
-  def __init__(
-      self,
-      observation_space: spaces.Box,
-      features_dim: int = 128,
-      price_features: int = 1,
-      ind_features: int = 5,
-  ):
-    super().__init__(observation_space, features_dim)
-
-    self.price_features = price_features
-    self.ind_features = ind_features
-
-    self.cnn = nn.Sequential(
-        nn.Conv1d(in_channels=1, out_channels=16, kernel_size=3, padding=1), 
-        nn.ReLU(),
-        nn.Conv1d(in_channels=16, out_channels=32, kernel_size=3, padding=1),
-        nn.ReLU(),
-        nn.Flatten(),
-    )
-
-    cnn_out_dim = 32 * price_features
-    total_concat_dim = cnn_out_dim + ind_features
-
-    self.linear = nn.Sequential(
-        nn.Linear(total_concat_dim, features_dim), nn.ReLU()
-    )
-
-  def forward(self, observations: th.Tensor) -> th.Tensor:
-    priceobs = observations[:, : self.price_features].unsqueeze(1) 
-    ind = observations[:, self.price_features :] 
-
-    cnn_feat = self.cnn(priceobs)  
-    combined = th.cat([cnn_feat, ind], dim=1) 
-
-    return self.linear(combined)
-
-######################################## RNN FOR PPO ####################################################3
-
-class CustomRNN(BaseFeaturesExtractor):
-
-    def __init__(
-
-        self,
-        observation_space: spaces.Box,
-        features_dim: int = 128,
-        price_features: int = 1,
-        ind_features: int = 5,
-        hidden_size: int = 64,
-    ):
-        super().__init__(observation_space, features_dim)
-
-        self.price_features = price_features
-        self.ind_features = ind_features
-
-        self.rnn = nn.RNN(input_size=1, hidden_size=hidden_size, num_layers=1, batch_first=True)
-
-        total_concat_dim = hidden_size + ind_features
-        self.linear = nn.Sequential(
-            nn.Linear(total_concat_dim, features_dim), nn.ReLU()
-        )
-
-    def forward(self, observations: th.Tensor) -> th.Tensor:
-        priceobs = observations[:, : self.price_features].unsqueeze(-1)
-        ind = observations[:, self.price_features :] 
-
-        rnn_out, h_n = self.rnn(priceobs)
-        last_hidden = h_n.squeeze(0)
-
-        combined = th.cat([last_hidden, ind], dim=1) 
-        return self.linear(combined)
-
-policy_kwargs_def = None
-
-policy_kwargs_cnn = dict(
-    features_extractor_class=CustomCNN,
-    features_extractor_kwargs=dict(
-        price_features=10, ind_features=14, features_dim=128
-    ),
-)
-
-policy_kwargs_rnn = dict(
-    features_extractor_class=CustomRNN,
-    features_extractor_kwargs=dict(
-        price_features=10, ind_features=14, hidden_size=64, features_dim=128
-    ),
-)
-
-_cache = {}
-
-def load(t):
-    if t not in _cache:
-        df = yf.download(tickers=t, start=start_date, end=end_date,
-                         interval="1d", group_by="ticker",
-                         auto_adjust=True, progress=False)
-        if isinstance(df.columns, pd.MultiIndex):
-            for level in range(df.columns.nlevels):
-                if set(df.columns.get_level_values(level)) == {t}:
-                    df.columns = df.columns.droplevel(level)
-                    break
-        assert len(df) > 300, f"{t}: only {len(df)} rows downloaded"
-        _cache[t] = df
-    return _cache[t]
-
-for t in tickers + test_tickers:
-    load(t)
-    
+def loadc(t):
+    return dataframe["Close"][t]
+def loadh(t):
+    return dataframe["High"][t]
+def loadl(t):
+    return dataframe["Low"][t]
 
 class Environment(gym.Env):
 
@@ -195,7 +69,10 @@ class Environment(gym.Env):
         self.startingcash = startingcash
         self.lossq = 0
         self.ticker = ticker
-        self.df = load(ticker)
+
+        self.df = loadc(ticker)
+        self.dfl = loadl(ticker)
+        self.dfh = loadh(ticker)
 
         portfolios[self.id] = Portfolio(id = self.id, cash = startingcash, holdings={})
         self.portfolio = portfolios[self.id]
@@ -211,9 +88,9 @@ class Environment(gym.Env):
         self.epsilon_prev = 0
 
     def _get_obs(self):
-        close = self.df["Close"]
-        high = self.df["High"]
-        low = self.df["Low"]
+        close = self.df
+        high = self.dfh
+        low = self.dfl
         i = min(self.gl_counter, len(self.df) - 1)
 
         price_change = 0.0 if i == 0 else (close.iloc[i] - close.iloc[i-1]) / close.iloc[i-1]
@@ -241,7 +118,8 @@ class Environment(gym.Env):
         
         return np.array(
             list(self.pricesarray) + 
-            list(self.volarray) +             [
+            list(self.volarray) + 
+            [
                 spread,
                 cash_ratio,
                 holdings_ratio,
@@ -256,7 +134,9 @@ class Environment(gym.Env):
 
         pool = tickers if tort else test_tickers
         self.ticker = random.choice(pool)
-        self.df = load(self.ticker)
+        self.df = loadc(self.ticker)
+        self.dfh = loadh(self.ticker)
+        self.dfl = loadl(self.ticker)
         self.stock = Stock(id=self.ticker, pricepoint=None, name=self.ticker,
                         borderArr=None, sofferArr=None)
 
@@ -280,20 +160,19 @@ class Environment(gym.Env):
     def _portfolio_value(self):
         qty = self.portfolio.holdings.get(self.stock.id, 0)
         i = min(self.gl_counter, len(self.df) - 1)
-        return self.portfolio.cash + qty * self.df["Close"].iloc[i]
+        return self.portfolio.cash + qty * self.df.iloc[i]
     
     
     def step(self, action):
 
         mintrade = 300
         value_before = self._portfolio_value()
-        stock_before = self.df["Close"].iloc[self.gl_counter]
+        stock_before = self.df.iloc[self.gl_counter]
 
         act = float(action[0]) if hasattr(action, "__len__") else float(action)
         order_action = "hold"
 
         #calculating what action the agent will take
-
         if act < -0.05 and self.portfolio.holdings != None and self.portfolio.holdings.get(self.stock.id, 0) > 0:
             order_action = "sell"
         elif act > 0.05 and self.portfolio.cash > 0: #dodaj tle fee
@@ -305,7 +184,7 @@ class Environment(gym.Env):
         transaction_fee = 0.0035
         minfee = 3
         fee_factor = 1 + transaction_fee
-        priceref = self.df["Close"].iloc[self.gl_counter]                
+        priceref = self.df.iloc[self.gl_counter]                
 
         num = min(1.0, abs(act))
         if order_action == "buy":
@@ -346,27 +225,22 @@ class Environment(gym.Env):
                 else: order_action = "hold"
             else: order_action = "hold"
 
-    
-
         self.gl_counter += 1
-
         terminated = False
         truncated = self.gl_counter >= len(self.df) - 1
 
         # Calculate portfolio value at NEW market price
         value_after = self._portfolio_value()
-        stock_after = self.df["Close"].iloc[self.gl_counter]
+        stock_after = self.df.iloc[self.gl_counter]
 
         port_ret = (value_after - value_before) / value_before
         stock_ret = (stock_after - stock_before) / stock_before
 
         downside = min(0.0, port_ret) ** 2
         lam = 3
-        # Reward from portfolio change
 
-        reward = 100*(port_ret - stock_ret) #cares about beating the marekt and downside
-        #reward = ((value_after - value_before) / self.startingcash) - lam * downside #cares ab abs profit
-
+        #reward = 100*(port_ret - stock_ret) #cares about beating the marekt and downside
+        reward = ((value_after - value_before) / self.startingcash) #cares ab abs profit
         ordernum = 0
 
         if order_action == "buy":

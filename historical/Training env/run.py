@@ -4,18 +4,14 @@ import os
 from stable_baselines3 import SAC, PPO
 from stable_baselines3.common.env_checker import check_env
 
-#depends on what enviroment we're importing from, when trainign or testing uncomment 
-from training import Environment, SEED, CustomCNN, CustomRNN, policy_kwargs_cnn, policy_kwargs_rnn, policy_kwargs_def
-
-#from testing import Environment, SEED, CustomCNN, CustomRNN, policy_kwargs_cnn, policy_kwargs_rnn, policy_kwargs_def
+from training import Environment, SEED
+from Classes import  CustomCNN, CustomRNN, policy_kwargs_cnn, policy_kwargs_rnn, policy_kwargs_def
 import matplotlib.pyplot as plt
 import numpy as np
 from training import tort
 
 
 def main():
-    # 1. Instantiate & check Gymnasium compliance
-    #you put the import after the thing
     env = Environment(id=1, startingcash=10000.0)
     check_env(env)
 
@@ -30,17 +26,9 @@ def main():
         agent = PPO.load("cnn1mppo", env=env)
 
 
-
-    #agent = PPO("MlpPolicy", env, seed=SEED, verbose=1, ent_coef=0, policy_kwargs=policy_kwargs_default, learning_rate=0.0003)
-    #agent = PPO.load("cnn1mppo", env=env)
-
     #agent = SAC("MlpPolicy", env, seed=SEED, verbose=1, ent_coef="auto", learning_rate=0.0005)
     #agent = SAC.load("META YTD agent 200k", env=env)
 
-    #agent.learn(total_timesteps=1000000, log_interval=1) #to doloci kolko casa traja oz how many steps
-    #najprej learna
-
-    #agent.save("cnn1mppo")
 
     xpoints = np.array([])
     ypoints = np.array([])

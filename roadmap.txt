@@ -24,44 +24,46 @@ read to improve my trading simulation agents
 in ce ni overfitting. 4.78%!! -5, nvda 12,76 22% nke -22 -40. added metric obs for lossq. however it underperforms heavily for bull markets. set a clear research path and cut the ML part entiry to focus on RL and go deep
 28.9 read chapoter 3 and 4 of SB RL, read and compared SAC, PPO, TD3, DQN and REINFORCE. updated knowlage of RNN, LTSM, GRU. decided to implement all of em and see whats better, learned what alphas and betas is
 29.9 read ML for AT, learned about CNNs, implemented one from documentation with gemini tweaks, i learned theory and can implement myself tho. implemented RNN. did diagram for the project. organised resources
-1.10 fixed graphs, added deque for last prices, added functionality to graphs, ugotoivil da je graf za orderprice narobe samo med trainanjem, med testiranjem bi rabu bit ok
+1.10 fixed graphs, added deque for last prices, added functionality to graphs, ugotoivil da je graf za orderprice narobe samo med trainanjem, med testiranjem bi rabu bit ok, pogledal reward v 1. paper iz reward zapiskov
+ma se mi ne zdi da bi blo ok ker rabi racunat sproti in bi bilo noisy ali? dodal downsside v reward func, dodal volatility arr v obs, spremenil da runna samo enkrat po train, nujno treba povecat sample size in ugotovi zakaj je v
+profitabiliyx na smp500 0% ceprav samo holda
+2.10 removed threshold and ordersize hardocding, found out what the numbers mean in training, still the agent is concerning now that i added more trainign data - entropy loss and std are too low/high respecvely. std of 11 means its always at some extreme so either buy or sell
+with entrophy coef 10x less its way better 
+3.10 added training on a multitude of tickers, adding a new rward function rewarding betating the marekt, implemented cache csv, moved cnns and rnns to classes
 
 TO DO LIST:
-preberi in poglej kaj sm dodal za reward function al pa pac naredi svojo z vec enotami
+NORMALISATION
+
+losing strat ki winna na dneve ko tvoj zgublja je lahko winning? markowitz
+
+more layers??? 
+video layers doesnt guarantee better? houtube
+
+policy gradient (slope of expected reward) we get through backpeopagation (Backpropagation is the method that computes the slope of a loss with respect to every weight)
+
+minimise loss instead of increasing reward
+
+gradient as depth increases gets closer to noise
+
+skip connection?
+residual stream?
+make custom algo, custom cnn etc
+
+tweakaj reward func
+naredi uni GAN al kaj je ze dodaj GBM, Jump diffusion in OU s tem da extractas volatility in noise iz realnih podatkov z dW ZA obs
 naredi 2d convoltuion se z enim arrayem tako kot prices 
-train models on 200k steps those 3
-fix resume
-backtest on other stocks
-add metric that tells how many hold steps, how many buys and how many sells
 implementaj lstm
-poglej five Kenneth French
-stock_return_t = β_mkt · market_factor_t + β_smb · SMB_t + β_hml · HML_t + β_cma · CMA_t + β_rmw · RMW_t + ε_t
-poglej u se knjige in poglej kaj se da extractat najdej da js uporabim pol pa dejansko preberi
-mogoce spremeni reward da je risk ajusted
-penalise drawdowns
-add a penalty for holding when high volatility tipo nvda bear market
-ko je stagnant pac naredi da na trada
-designaj reward tako da bo to delal uglavnem pac kot uni meta strat brez tega
+poglej five Kenneth Frenc
 uglavnem googlaj state representation reinforcement learning TO
 naredi meta rl ki ugotovi katerega bos runnal
 add garch to RNN as a forceast to model volatility and price!! why not both, testiraj impact
-backtestaj na drugih marketih
 dodaj block bootstrapping
-dodaj GBM, Jump diffusion in OU s tem da extractas volatility in noise iz realnih podatkov z dW ZA obs
-TRAIN A neural network in past tickers and make it generate a new enviroment to trade in - research this
-also add rolling window backtesting to be more specific
 implementaj performance metrics (Maximum drawdown, Volatility, Win rate, Profit factor, Turnover, Transaction costs, Slippage, Average holding time, Inventory exposure, Number of trades)
 naredi boljse trading bote - googlaj to Agent-Based Computational Finance poglej si downloadal dva cpatera useful
-dodaj GBM, Jump diffusion in OU s tem da extractas volatility in noise iz realnih podatkov z dW
-TRAIN A neural network in past tickers and make it generate a new enviroment to trade in - research this
-add garch to RNN as a forceast to model volatility and price!! why not both, testiraj impact
 naredi boljso dokumentacijo
 dodaj nesinhrono delovanje, to bo eno vecjih problemov, basically vec tradeov na step
 naredi event queue, configurable latency, cash in stock reservation
-actually se nauci osnove RL in ML tipo statistiko in to 
 add shorting and black scholes
-train a rl model on synthetic data, diffrent models
-train a rl model on historical data, diffrent models
 backtest and test with diffrent starting capital, transaction fees, volatility, latency, num of traders, spread, initial inventory
 testiraj z razlicnimi seedi
 
@@ -128,6 +130,11 @@ Advances in Financial Machine Learning by Marcos López de Prado (Essential for 
 Machine Learning for Algorithmic Trading by Stefan Jansen (Has dedicated chapters on Gym environments and RL trading agents). DEFINITIVNO PREBERI TO OZ VSAJ SKIM IN NAJDI IDEJE
 
 NOTES
+
+RL nums:
+	std- how random the actions aree
+	explained variance- how well the critic predicts the future
+	entropy loss: more negative more random
 CNN:
 	they find edges or corners in their receptive fields (small area of input) 
 	the next layers then merge them
