@@ -6,9 +6,11 @@ from stable_baselines3.common.env_checker import check_env
 
 #depends on what enviroment we're importing from, when trainign or testing uncomment 
 from training import Environment, SEED, CustomCNN, CustomRNN, policy_kwargs_cnn, policy_kwargs_rnn, policy_kwargs_def
+
 #from testing import Environment, SEED, CustomCNN, CustomRNN, policy_kwargs_cnn, policy_kwargs_rnn, policy_kwargs_def
 import matplotlib.pyplot as plt
 import numpy as np
+from training import tort
 
 
 def main():
@@ -17,20 +19,28 @@ def main():
     env = Environment(id=1, startingcash=10000.0)
     check_env(env)
 
-    policy_kwargs_default = policy_kwargs_def
+    #policy_kwargs_default = policy_kwargs_def
     #policy_kwargs_default = policy_kwargs_rnn
-    #policy_kwargs_default = policy_kwargs_cnn
+    policy_kwargs_default = policy_kwargs_cnn
+    if tort:
+        agent = PPO("MlpPolicy", env, seed=SEED, verbose=1, ent_coef=0, policy_kwargs=policy_kwargs_default, learning_rate=0.0003)
+        agent.learn(total_timesteps=1000000, log_interval=1) #to doloci kolko casa traja oz how many steps
+        agent.save("cnn1mppo")
+    else:
+        agent = PPO.load("cnn1mppo", env=env)
 
-    agent = PPO("MlpPolicy", env, seed=SEED, verbose=1, ent_coef=0.05, policy_kwargs=policy_kwargs_default, learning_rate=0.0005)
-    #agent = PPO.load("cnn200kppo", env=env)
+
+
+    #agent = PPO("MlpPolicy", env, seed=SEED, verbose=1, ent_coef=0, policy_kwargs=policy_kwargs_default, learning_rate=0.0003)
+    #agent = PPO.load("cnn1mppo", env=env)
 
     #agent = SAC("MlpPolicy", env, seed=SEED, verbose=1, ent_coef="auto", learning_rate=0.0005)
     #agent = SAC.load("META YTD agent 200k", env=env)
 
-    agent.learn(total_timesteps=100000, log_interval=1) #to doloci kolko casa traja oz how many steps
+    #agent.learn(total_timesteps=1000000, log_interval=1) #to doloci kolko casa traja oz how many steps
     #najprej learna
 
-    agent.save("def100kppo")
+    #agent.save("cnn1mppo")
 
     xpoints = np.array([])
     ypoints = np.array([])
@@ -47,7 +57,7 @@ def main():
     global_step = 0
     episode_starts = []
 
-    episodenum = 50
+    episodenum = 1
     
     for i in range(episodenum): #to je potem evaluation
         episode_starts.append(global_step + 1)
