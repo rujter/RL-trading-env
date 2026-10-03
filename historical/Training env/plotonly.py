@@ -1,16 +1,16 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import math
-from training import ticker
+import pandas as pd
+
 
 data = np.load("eval_results.npz")
+ticker = str(data["ticker"])
 xpoints = data["xpoints"]
 ypoints = data["ypoints"]
 buy_x, buy_y = data["buy_x"], data["buy_y"]
 sell_x, sell_y = data["sell_x"], data["sell_y"]
 hold_x, hold_y = data["hold_x"], data["hold_y"]
-cborder_x, cborder_y = data["cborder_x"], data["cborder_y"]
-csoffer_x, csoffer_y = data["csoffer_x"], data["csoffer_y"]
 episode_arr = data["episode_arr"]
 profitabilitypercentage_arr = data["profitabilitypercentage_arr"]
 episode_starts = data["episode_starts"]
@@ -21,13 +21,11 @@ sharpe = profitabilitypercentage_arr.mean() / profitabilitypercentage_arr.std()
 T = 0.0  #threshold
 temp = np.minimum(0, profitabilitypercentage_arr - T)**2
 downside_dev = np.sqrt(np.mean(temp))
-
-
 sortino = (profitabilitypercentage_arr.mean() - T) / (downside_dev + 1e-8)
 
+profbyholding = ((ypoints[-1]-ypoints[0])/ypoints[0])*100
 
 down = np.minimum(0,profitabilitypercentage_arr)
-sortino = profitabilitypercentage_arr.mean() / down.std()
 
 #pricemovement
 plt.figure(figsize=(20, 6)) 
@@ -72,12 +70,11 @@ plt.close()
 plt.figure(figsize=(20, 6)) 
 plt.text(0.02, 0.95, f"avg profitability: {avg_profitability:.2f}%", 
         transform=plt.gca().transAxes, color='green', fontsize=10, va='top')
-plt.text(0.02, 0.90, f"sharpe ratio: {sharpe:.2f}", 
-        transform=plt.gca().transAxes, color='green', fontsize=10, va='top')
-plt.text(0.02, 0.85, f"sortino ratio: {sortino:.2f}", 
-        transform=plt.gca().transAxes, color='green', fontsize=10, va='top')
+plt.text(0.02, 0.90, f"sharpe ratio: {sharpe:.2f}", transform=plt.gca().transAxes, color='green', fontsize=10, va='top')
+plt.text(0.02, 0.85, f"sortino ratio: {sortino:.2f}", transform=plt.gca().transAxes, color='green', fontsize=10, va='top')
 plt.text(0.02, 0.8, f"tckr: {ticker}", 
         transform=plt.gca().transAxes, color='green', fontsize=10, va='top')
+plt.text(0.02, 0.75, f"prof by hold: {profbyholding:.2f}%", transform=plt.gca().transAxes, color='green', fontsize=10, va='top')
 
 plt.plot(episode_arr, profitabilitypercentage_arr)
 plt.legend()

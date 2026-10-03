@@ -43,12 +43,11 @@ test_tickers = [
     "IWM", "EEM", "XLE",
 ]
 
-tort = True #if true its trainig, else testing
+tort = False #if true its trainig, else testing
 globalctr = 0
 
 if tort: ticker = tickers[globalctr]
 else: ticker = test_tickers[random.randint(0,13)]
-
 
 def loadc(t):
     return dataframe["Close"][t]
@@ -239,8 +238,11 @@ class Environment(gym.Env):
         downside = min(0.0, port_ret) ** 2
         lam = 3
 
-        #reward = 100*(port_ret - stock_ret) #cares about beating the marekt and downside
-        reward = ((value_after - value_before) / self.startingcash) #cares ab abs profit
+        reward = 100*(port_ret - stock_ret) #cares about beating the marekt and downside SI
+        
+        #reward = ((value_after - value_before) / value_before) #cares ab abs profit 
+        #reward = ((value_after - value_before) / self.startingcash) #cares ab abs profit  SI ZAKAJ
+
         ordernum = 0
 
         if order_action == "buy":

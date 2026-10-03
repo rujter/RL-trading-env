@@ -8,9 +8,9 @@ from training import Environment, SEED
 from Classes import  CustomCNN, CustomRNN, policy_kwargs_cnn, policy_kwargs_rnn, policy_kwargs_def
 import matplotlib.pyplot as plt
 import numpy as np
-from training import tort
+from training import tort, ticker
 
-
+tic = ticker
 def main():
     env = Environment(id=1, startingcash=10000.0)
     check_env(env)
@@ -102,13 +102,14 @@ def main():
 
     env.close()
     
-    np.savez("eval_results.npz",
-            xpoints=xpoints, ypoints=ypoints,
+    np.savez("eval_results.npz", 
+            ticker=tic,xpoints=xpoints, ypoints=ypoints,
             buy_x=buy_x, buy_y=buy_y,
             sell_x=sell_x, sell_y=sell_y,
             hold_x=hold_x, hold_y=hold_y,
             cborder_x=cborder_x, cborder_y=cborder_y,
             csoffer_x=csoffer_x, csoffer_y=csoffer_y,
+            
             episode_arr=episode_arr, profitabilitypercentage_arr=profitabilitypercentage_arr,
             episode_starts=np.array(episode_starts))
     
