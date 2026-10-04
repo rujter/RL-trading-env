@@ -30,7 +30,7 @@ profitabiliyx na smp500 0% ceprav samo holda
 2.10 removed threshold and ordersize hardocding, found out what the numbers mean in training, still the agent is concerning now that i added more trainign data - entropy loss and std are too low/high respecvely. std of 11 means its always at some extreme so either buy or sell
 with entrophy coef 10x less its way better 
 3.10 added training on a multitude of tickers, adding a new rward function rewarding betating the marekt, implemented cache csv, moved cnns and rnns to classes, updated reward function, fixed graphing metrics
-4.10 mix obeh je boljsi, tweakaj params, poglej naprej tisti ucbenik, naredu boljse grafe, tweakal reward in buying logic, even if i change seed the results is the same??? ALMOST profitable
+4.10 mix obeh je boljsi, tweakaj params, poglej naprej tisti ucbenik, naredu boljse grafe, tweakal reward in buying logic, even if i change seed the results is the same??? ALMOST profitable lam 0,2 a = 0.5. added batch training and testing. skimmed first 3 standford videos and made notes
 
 TO DO LIST:
 possible upgrades: tweak with diff vals of a, diff lambda, diff seeds
@@ -59,6 +59,7 @@ RESOURCES
 
 intro:
 https://deeplearningwithpython.io/chapters/
+https://www.youtube.com/watch?v=EvHRQhMX7_w&list=PLoROMvodv4rPwxE0ONYRa_itZFdaKCylL 
 
 reward function engineering:
 https://arxiv.org/html/2506.04358v1

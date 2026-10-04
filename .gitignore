@@ -9,7 +9,7 @@ extras/
 literature/
 venv/
 __pycache__/
-
+models/
 
 
 token.txt
