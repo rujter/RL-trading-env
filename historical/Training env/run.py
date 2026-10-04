@@ -2,34 +2,22 @@ import numpy as np
 from stable_baselines3 import PPO
 from stable_baselines3.common.env_checker import check_env
 
-from training import Environment, SEED, tort
+from training import Environment, tort
 from Classes import CustomCNN, CustomRNN, policy_kwargs_cnn, policy_kwargs_rnn, policy_kwargs_def
+from pathlib import Path
+from plotonly import plot_results
+import random
 
-MODEL_PATH = "cnn1m0.2"  
+
 N_EVAL_EPISODES = 14
-TOTAL_TIMESTEPS = 1_000_000
+TOTAL_TIMESTEPS = 100000
+START_SEED = 30
+START_LAMBDA = 0.2
 
+foldermodel = Path("models")
+foldermodel.mkdir(exist_ok=True)
 
-def main():
-    env = Environment(id=1, startingcash=10000.0)
-    check_env(env)
-
-    env.test_ctr = 0  
-
-    # policy_kwargs = policy_kwargs_def
-    # policy_kwargs = policy_kwargs_rnn
-    policy_kwargs = policy_kwargs_cnn
-
-    if tort:
-        agent = PPO("MlpPolicy", env, seed=SEED, verbose=1, ent_coef=0.005,policy_kwargs=policy_kwargs, learning_rate=0.0003,)
-        agent.learn(total_timesteps=TOTAL_TIMESTEPS, log_interval=1)
-        agent.save(MODEL_PATH)
-        env.close()
-        return
-
-    # ---------------- evaluation ----------------
-    agent = PPO.load(MODEL_PATH, env=env)
-
+def evaluation(agent, env, name):
     xpoints, ypoints = [], []
     buy_x, buy_y = [], []
     sell_x, sell_y = [], []
@@ -54,9 +42,6 @@ def main():
             ep_steps += 1
 
             action, _ = agent.predict(obs, deterministic=True)
-            if ep_steps < 10:
-                print(f"STEP {ep_steps} | action = {action}")
-
             obs, reward, terminated, truncated, info = env.step(action)
             ep_reward += reward
 
@@ -81,8 +66,6 @@ def main():
 
                 episode_arr.append(episode)
                 profitability_arr.append(profit_pct)
-
-                # buy-and-hold benchmark for THIS episode only
                 realx.append(episode)
                 realy.append(price - first_price)
 
@@ -96,10 +79,9 @@ def main():
                 )
                 break
 
-    env.close()
-
+    results_path = f"eval_results_{name}.npz"
     np.savez(
-        "eval_results.npz",
+        results_path,
         xpoints=np.array(xpoints), ypoints=np.array(ypoints),
         buy_x=np.array(buy_x), buy_y=np.array(buy_y),
         sell_x=np.array(sell_x), sell_y=np.array(sell_y),
@@ -110,6 +92,41 @@ def main():
         episode_starts=np.array(episode_starts),
         tickers=np.array(episode_tickers),
     )
+
+    plot_results(seed=name, results_path=results_path)
+
+
+def main():
+    env = Environment(id=1, startingcash=10000.0)
+    check_env(env)
+    env.test_ctr = 0
+
+    policy_kwargs = policy_kwargs_cnn
+
+    seed = START_SEED
+    for i in range(3):
+        lambdaval = START_LAMBDA
+        for j in range(3):
+            MODEL_NAME = f"ppo100kcnn_s{seed}_l{lambdaval:.1f}"
+
+            env.lam = lambdaval
+            random.seed(seed)
+
+            if tort:
+                agent = PPO("MlpPolicy", env, seed=seed, verbose=1, ent_coef=0.005,
+                            policy_kwargs=policy_kwargs, learning_rate=0.0003)
+                agent.learn(total_timesteps=TOTAL_TIMESTEPS, log_interval=1)
+                agent.save(foldermodel / MODEL_NAME)
+            else:
+                print("evaluating", MODEL_NAME)
+                env.test_ctr = 0
+                agent = PPO.load(foldermodel / MODEL_NAME, env=env)
+                evaluation(agent, env, MODEL_NAME)
+
+            lambdaval = round(lambdaval + 0.1, 1)
+        seed += 1
+
+    env.close()
 
 
 if __name__ == "__main__":

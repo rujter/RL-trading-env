@@ -7,8 +7,8 @@ import pandas as pd
 from collections import deque
 import math
 from Classes import Portfolio, Stock, PPinpoint, Order, next_order_id, nextId
-SEED = 30
 
+SEED = 30
 random.seed(SEED)
 portfolios = {}
 start_date = datetime(year=2021, month=1, day=1)
