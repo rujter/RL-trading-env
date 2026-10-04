@@ -1,6 +1,4 @@
 from datetime import datetime
-import matplotlib.pyplot as plt
-import yfinance as yf
 import gymnasium as gym
 from gymnasium import spaces
 import numpy as np
@@ -9,8 +7,9 @@ import pandas as pd
 from collections import deque
 import math
 from Classes import Portfolio, Stock, PPinpoint, Order, next_order_id, nextId
-SEED = 34
+SEED = 30
 
+random.seed(SEED)
 portfolios = {}
 start_date = datetime(year=2021, month=1, day=1)
 end_date = datetime(year=2025, month=1, day=1)
@@ -44,10 +43,7 @@ test_tickers = [
 ]
 
 tort = False #if true its trainig, else testing
-globalctr = 0
 
-if tort: ticker = tickers[globalctr]
-else: ticker = test_tickers[random.randint(0,13)]
 
 def loadc(t):
     return dataframe["Close"][t]
@@ -60,22 +56,31 @@ class Environment(gym.Env):
 
     def __init__(self,
                  startingcash = 5000,
-                 id = 1):
-        
+                 id = 1,
+                 lam = 0.2, 
+                 a = 0.5):
+
         super().__init__()
         self.gl_counter = 0
+
+        self.a = a
+        self.lam = lam
+
+        self.test_ctr = 0   # index of the NEXT test ticker to use
+
         self.id = id
         self.startingcash = startingcash
         self.lossq = 0
-        self.ticker = ticker
+        self.peak = self.startingcash
+        self.ticker = tickers[0] if tort else test_tickers[0]
 
-        self.df = loadc(ticker)
-        self.dfl = loadl(ticker)
-        self.dfh = loadh(ticker)
+        self.df = loadc(self.ticker)
+        self.dfl = loadl(self.ticker)
+        self.dfh = loadh(self.ticker)
 
         portfolios[self.id] = Portfolio(id = self.id, cash = startingcash, holdings={})
         self.portfolio = portfolios[self.id]
-        self.stock = Stock(id = self.ticker, pricepoint=None, name=ticker, borderArr=None, sofferArr=None)
+        self.stock = Stock(id = self.ticker, pricepoint=None, name=self.ticker, borderArr=None, sofferArr=None)
         self.prevvolatility = 0
 
         self.pricesarray = deque([0,0,0,0,0,0,0,0,0,0], maxlen=10)
@@ -98,7 +103,7 @@ class Environment(gym.Env):
         if i == 0: re = 0.0
         else: re = (close.iloc[i] - close.iloc[i - 1]) / close.iloc[i - 1]
 
-        self.lossq = self.lossq = (self.lossq * 0.5) + (min(0, re) ** 2)
+        self.lossq = (self.lossq * 0.5) + (min(0, re) ** 2)
 
         spread = (high.iloc[i] - low.iloc[i]) / close.iloc[i]
 
@@ -114,16 +119,15 @@ class Environment(gym.Env):
         volatility =  math.sqrt(0.00001+  0.07 * self.epsilon_prev**2 + 0.90 * self.prevvolatility**2)
         self.prevvolatility = volatility
         self.volarray.append(volatility)
-        
+
         return np.array(
-            list(self.pricesarray) + 
-            list(self.volarray) + 
+            list(self.pricesarray) +
+            list(self.volarray) +
             [
                 spread,
                 cash_ratio,
                 holdings_ratio,
                 self.portfolio.cash / self.startingcash,
-                #lossq,
             ],
             dtype=np.float32
         )
@@ -131,8 +135,13 @@ class Environment(gym.Env):
     def reset(self, seed=None, options=None):
         super().reset(seed=seed, options=options)
 
-        pool = tickers if tort else test_tickers
-        self.ticker = random.choice(pool)
+        # used the same ticker (AAPL in training, GOOGL in testing).
+        if tort:
+            self.ticker = random.choice(tickers)
+        else:
+            self.ticker = test_tickers[self.test_ctr % len(test_tickers)]
+            self.test_ctr += 1   # FIX: was incremented twice per reset
+
         self.df = loadc(self.ticker)
         self.dfh = loadh(self.ticker)
         self.dfl = loadl(self.ticker)
@@ -148,6 +157,7 @@ class Environment(gym.Env):
         self.pricesarray.extend([0.0] * 10)
         self.volarray.clear()
         self.volarray.extend([0.0] * 10)
+        self.peak = self.startingcash
 
         self.gl_counter = randomnum
         self.epsilon_prev = 0
@@ -155,17 +165,18 @@ class Environment(gym.Env):
         self.prevvolatility = 0
 
         return self._get_obs(), {}
-    
+
     def _portfolio_value(self):
         qty = self.portfolio.holdings.get(self.stock.id, 0)
         i = min(self.gl_counter, len(self.df) - 1)
         return self.portfolio.cash + qty * self.df.iloc[i]
-    
-    
+
+
     def step(self, action):
 
         mintrade = 300
         value_before = self._portfolio_value()
+        dd_before = (self.peak - value_before) / self.peak
         stock_before = self.df.iloc[self.gl_counter]
 
         act = float(action[0]) if hasattr(action, "__len__") else float(action)
@@ -178,33 +189,34 @@ class Environment(gym.Env):
             order_action = "buy"
         else:
             order_action = "hold"
-            
+
         #ali 3 eur ali 0.35%
         transaction_fee = 0.0035
         minfee = 3
         fee_factor = 1 + transaction_fee
-        priceref = self.df.iloc[self.gl_counter]                
+        priceref = self.df.iloc[self.gl_counter]
 
         num = min(1.0, abs(act))
         if order_action == "buy":
-
-            ordersize = int((num * self.portfolio.cash) // priceref)
+            budget = num * self.portfolio.cash
+            
+            # largest whole number of shares where cost + fee still fits in the budget
+            ordersize = int(budget // (priceref * fee_factor))
+            while ordersize > 0:
+                cost = ordersize * priceref
+                fee = max(minfee, cost * transaction_fee)
+                if cost + fee <= budget:
+                    break
+                ordersize -= 1
 
             if ordersize > 0:
-                cost = ordersize*priceref
-
-                if (cost * fee_factor) <= minfee: fee = minfee
-                else: fee = cost*transaction_fee
-
-
-                if self.portfolio.cash > ordersize*priceref+fee:
-                    self.portfolio.cash -= (cost + fee)
-                    self.portfolio.holdings[self.stock.id] = self.portfolio.holdings.get(self.stock.id, 0) + ordersize
-
-            else: order_action = "hold"
+                self.portfolio.cash -= (cost + fee)
+                self.portfolio.holdings[self.stock.id] = self.portfolio.holdings.get(self.stock.id, 0) + ordersize
+            else:
+                order_action = "hold"
 
 
-        elif order_action == "sell": 
+        elif order_action == "sell":
 
             current_holdings = self.portfolio.holdings.get(self.stock.id, 0)
 
@@ -235,13 +247,11 @@ class Environment(gym.Env):
         port_ret = (value_after - value_before) / value_before
         stock_ret = (stock_after - stock_before) / stock_before
 
-        downside = min(0.0, port_ret) ** 2
-        lam = 3
+        self.peak = max(self.peak, value_after)
+        dd_after = (self.peak - value_after) / self.peak
+        dd_increase = max(0.0, dd_after - dd_before)
 
-        reward = 100*(port_ret - stock_ret) #cares about beating the marekt and downside SI
-        
-        #reward = ((value_after - value_before) / value_before) #cares ab abs profit 
-        #reward = ((value_after - value_before) / self.startingcash) #cares ab abs profit  SI ZAKAJ
+        reward = port_ret - self.a * stock_ret - self.lam * dd_increase
 
         ordernum = 0
 
