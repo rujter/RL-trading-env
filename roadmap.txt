@@ -29,27 +29,14 @@ ma se mi ne zdi da bi blo ok ker rabi racunat sproti in bi bilo noisy ali? dodal
 profitabiliyx na smp500 0% ceprav samo holda
 2.10 removed threshold and ordersize hardocding, found out what the numbers mean in training, still the agent is concerning now that i added more trainign data - entropy loss and std are too low/high respecvely. std of 11 means its always at some extreme so either buy or sell
 with entrophy coef 10x less its way better 
-3.10 added training on a multitude of tickers, adding a new rward function rewarding betating the marekt, implemented cache csv, moved cnns and rnns to classes
+3.10 added training on a multitude of tickers, adding a new rward function rewarding betating the marekt, implemented cache csv, moved cnns and rnns to classes, updated reward function, fixed graphing metrics
+4.10 mix obeh je boljsi, tweakaj params, poglej naprej tisti ucbenik, naredu boljse grafe, tweakal reward in buying logic, even if i change seed the results is the same??? ALMOST profitable
 
 TO DO LIST:
-NORMALISATION
-
-losing strat ki winna na dneve ko tvoj zgublja je lahko winning? markowitz
-
-more layers??? 
-video layers doesnt guarantee better? houtube
-
-policy gradient (slope of expected reward) we get through backpeopagation (Backpropagation is the method that computes the slope of a loss with respect to every weight)
-
-minimise loss instead of increasing reward
-
-gradient as depth increases gets closer to noise
-
-skip connection?
-residual stream?
+possible upgrades: tweak with diff vals of a, diff lambda, diff seeds
+preberi intro notes
 make custom algo, custom cnn etc
-
-tweakaj reward func
+tweakaj reward func (mogoce tako da bo da je reward excess value ne pa samo hold)
 naredi uni GAN al kaj je ze dodaj GBM, Jump diffusion in OU s tem da extractas volatility in noise iz realnih podatkov z dW ZA obs
 naredi 2d convoltuion se z enim arrayem tako kot prices 
 implementaj lstm
@@ -66,8 +53,12 @@ naredi event queue, configurable latency, cash in stock reservation
 add shorting and black scholes
 backtest and test with diffrent starting capital, transaction fees, volatility, latency, num of traders, spread, initial inventory
 testiraj z razlicnimi seedi
+napisi clanek
 
 RESOURCES
+
+intro:
+https://deeplearningwithpython.io/chapters/
 
 reward function engineering:
 https://arxiv.org/html/2506.04358v1
@@ -130,6 +121,24 @@ Advances in Financial Machine Learning by Marcos López de Prado (Essential for 
 Machine Learning for Algorithmic Trading by Stefan Jansen (Has dedicated chapters on Gym environments and RL trading agents). DEFINITIVNO PREBERI TO OZ VSAJ SKIM IN NAJDI IDEJE
 
 NOTES
+
+
+intro notes:
+
+	gradient decent: when modifying the weights check the function direction where it moved. 
+	find the loss and compute the gradient of the loss and tweak the params in the other way
+	the learning rate has to be the point so it doesnt take the most time or take random actions
+	it has to descent down the gradient
+
+random ahh notes iz youtube videa?:
+	losing strat ki winna na dneve ko tvoj zgublja je lahko winning? markowitz
+	more layers??? 
+	video layers doesnt guarantee better? houtube
+	policy gradient (slope of expected reward) we get through backpeopagation (Backpropagation is the method that computes the slope of a loss with respect to every weight)
+	minimise loss instead of increasing reward
+	gradient as depth increases gets closer to noise
+	skip connection?
+	residual stream?
 
 RL nums:
 	std- how random the actions aree
