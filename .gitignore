@@ -10,6 +10,14 @@ literature/
 venv/
 __pycache__/
 models/
+map/
+4seedeval/
+eval_plots/
+eval_results/
+models/
+
+cache.txt
+cache2125.txt
 
 
 token.txt

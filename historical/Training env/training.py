@@ -8,41 +8,30 @@ from collections import deque
 import math
 from Classes import Portfolio, Stock, PPinpoint, Order, next_order_id, nextId
 
-SEED = 30
+SEED = 20
 random.seed(SEED)
 portfolios = {}
-start_date = datetime(year=2021, month=1, day=1)
-end_date = datetime(year=2025, month=1, day=1)
+start_date = datetime(year=2017, month=1, day=1)
+end_date = datetime(year=2021, month=1, day=1)
 dataframe = pd.read_csv("cache.txt", header=[0,1], skiprows=[2], index_col=0)
 
 tickers = [
     # Strong uptrend (winners)
-    "AAPL", "MSFT", "NVDA", "COST", "V",
-    # Long decline or stagnation (losers / sideways)
-    "INTC", "BA", "PFE", "VZ", "T", "KHC", "CVS", "NKE", "IBM",
-    # Cyclical, big swings with regime changes
-    "XOM", "CVX", "F", "GM", "CAT", "FCX",
-    # Defensive, low volatility
-    "KO", "PG", "JNJ", "DUK",
-    # High volatility
-    "TSLA", "AMD",
-    # Broad ETFs and other asset classes
-    "SPY", "QQQ", "GLD", "TLT",
+    "AMZN", "META", "AVGO", "ORCL", "CRM",
+    "QCOM", "ADBE", "AMAT", "MU", "GE",
+    "BAC", "WFC", "MS", "GS", "BLK", "C",
+    "LLY", "UNH", "ABBV", "MRK", "TMO", "AMGN",
+    "MCD", "SBUX", "TGT", "LOW",
+    "OXY", "SLB", "NEE", "SO",
 ]
 test_tickers = [
-    # Uptrend
-    "GOOGL", "HD",
-    # Long decline or stagnation (the most important group)
-    "DIS", "PYPL", "MMM", "CSCO",
-    # Cyclical / financial
-    "COP", "JPM", "DE",
-    # Defensive
-    "WMT", "PEP",
-    # Broad ETFs and other asset classes
-    "IWM", "EEM", "XLE",
+    "PANW", "NOW", "INTU", "AXP", "GILD",
+    "HON", "UNP", "RTX", "LMT", "EOG",
+    "LIN", "NEM", "DIA", "XLK",
 ]
 
-tort = False #if true its trainig, else testing
+
+tort = True #if true its trainig, else testing
 
 
 def loadc(t):
@@ -58,12 +47,14 @@ class Environment(gym.Env):
                  startingcash = 5000,
                  id = 1,
                  lam = 0.2, 
-                 a = 0.5):
+                 a = 0.5,
+                 b = 2):
 
         super().__init__()
         self.gl_counter = 0
 
         self.a = a
+        self.b = b
         self.lam = lam
 
         self.test_ctr = 0   # index of the NEXT test ticker to use
@@ -251,7 +242,7 @@ class Environment(gym.Env):
         dd_after = (self.peak - value_after) / self.peak
         dd_increase = max(0.0, dd_after - dd_before)
 
-        reward = port_ret - self.a * stock_ret - self.lam * dd_increase
+        reward = self.b*port_ret - self.a * stock_ret - self.lam * dd_increase
 
         ordernum = 0
 

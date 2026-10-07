@@ -1,5 +1,3 @@
-Observation space engineering for financial reinforcement learning agents: synthetic and historical markets
-
 source venv/bin/activate
 
 roadmap: 
@@ -31,32 +29,46 @@ profitabiliyx na smp500 0% ceprav samo holda
 with entrophy coef 10x less its way better 
 3.10 added training on a multitude of tickers, adding a new rward function rewarding betating the marekt, implemented cache csv, moved cnns and rnns to classes, updated reward function, fixed graphing metrics
 4.10 mix obeh je boljsi, tweakaj params, poglej naprej tisti ucbenik, naredu boljse grafe, tweakal reward in buying logic, even if i change seed the results is the same??? ALMOST profitable lam 0,2 a = 0.5. added batch training and testing. skimmed first 3 standford videos and made notes
+5.10 watched actor critic of stanford. wanted to tweak the rewards and everythig and did a fuckload of compute but nothing really worked
+probaj 2,1,0.05 tam okoli
+6.10 crazy, sm naredu heatmap. it underperforms always by like alpha 6% which is an upgrade. Might try more train dates. did hella compute, didnt really find anything out. claude fixed the metrics and some graphs. made a research paper template so im more organised
+humanised some code.
 
-TO DO LIST:
-possible upgrades: tweak with diff vals of a, diff lambda, diff seeds
-preberi intro notes
-make custom algo, custom cnn etc
-tweakaj reward func (mogoce tako da bo da je reward excess value ne pa samo hold)
-naredi uni GAN al kaj je ze dodaj GBM, Jump diffusion in OU s tem da extractas volatility in noise iz realnih podatkov z dW ZA obs
+What Matters for a Reinforcement Learning Stock Trader? An Ablation of Architecture, Observation Window, Reward and Algorithm
+HIPOTEZE:
+higher value of a (outperforming the market) makes the agent more risk aware (lower sortino) but at the same time also less profitable as opposed to b (general profit)
+agent with a 2d cnn will significantly outperform the bare agent, the gru one will come in second
+the observation space of 0 will perofrm the worst, with 20 and 60 better respectively
+ppo as it is an on policy algorithm will perform worse than sac given the 250k steps as it has a replay buffer
+
+5 seeds each
+REWARD 3X3 cell vedno ugotovi kateri so pametni da runnam w selected a and b sweeps (centre 0.75a, 1,5b with with 0.4 increments)
+250k steps each with snapshots in time
+ARCHITECTURE: BARE, 2D CNN, GRU
+LOOKBACK WINDOW: 5, 20, 60
+ALGORITHM: PPO, SAC
+
+100 delnic, 10 sektorjev (70 training, 30 testing)
+bodi pozoren na survivorship bias
+
+1	2008-2018	2019-2020	COVID crash and rebound
+2	2008-2020	2021-2022	Rate-shock bear market
+3	2008-2025	2026		Untouched, plus paper trading
+
+Metrics: raw return vs buy and hold, max drawdown, sortino, sharpe, calmar, omega, alpha, beta
+
+SAC is 10k steps: 106sec/10k steps
+PPO is 10k steps: 9sec/10k steps
+
+IMM TO DO:
 naredi 2d convoltuion se z enim arrayem tako kot prices 
-implementaj lstm
-poglej five Kenneth Frenc
-uglavnem googlaj state representation reinforcement learning TO
-naredi meta rl ki ugotovi katerega bos runnal
-add garch to RNN as a forceast to model volatility and price!! why not both, testiraj impact
-dodaj block bootstrapping
-implementaj performance metrics (Maximum drawdown, Volatility, Win rate, Profit factor, Turnover, Transaction costs, Slippage, Average holding time, Inventory exposure, Number of trades)
-naredi boljse trading bote - googlaj to Agent-Based Computational Finance poglej si downloadal dva cpatera useful
 naredi boljso dokumentacijo
-dodaj nesinhrono delovanje, to bo eno vecjih problemov, basically vec tradeov na step
-naredi event queue, configurable latency, cash in stock reservation
-add shorting and black scholes
-backtest and test with diffrent starting capital, transaction fees, volatility, latency, num of traders, spread, initial inventory
-testiraj z razlicnimi seedi
-napisi clanek
+humanise some code
+learn how to do snapshots in time
+learn how to change to gpu training
+izracunaj cas
 
 RESOURCES
-
 intro:
 https://deeplearningwithpython.io/chapters/
 https://www.youtube.com/watch?v=EvHRQhMX7_w&list=PLoROMvodv4rPwxE0ONYRa_itZFdaKCylL 
@@ -122,8 +134,6 @@ Advances in Financial Machine Learning by Marcos López de Prado (Essential for 
 Machine Learning for Algorithmic Trading by Stefan Jansen (Has dedicated chapters on Gym environments and RL trading agents). DEFINITIVNO PREBERI TO OZ VSAJ SKIM IN NAJDI IDEJE
 
 NOTES
-
-
 intro notes:
 
 	gradient decent: when modifying the weights check the function direction where it moved. 
@@ -343,3 +353,24 @@ ALGORITHM COMPARISON
 	actor only no critic
 	so pushing up the probability and argmax over that
 	only episodic non continous
+
+
+
+
+
+
+
+LATER TO DO LIST
+TO DO LIST:
+make custom algo, custom cnn etc
+naredi uni GAN al kaj je ze dodaj GBM, Jump diffusion in OU s tem da extractas volatility in noise iz realnih podatkov z dW ZA obs
+poglej five Kenneth Frenc
+uglavnem googlaj state representation reinforcement learning TO
+naredi meta rl ki ugotovi katerega bos runnal
+add garch to RNN as a forceast to model volatility and price!! why not both, testiraj impact
+dodaj block bootstrapping
+naredi boljse trading bote - googlaj to Agent-Based Computational Finance poglej si downloadal dva cpatera useful
+naredi boljso dokumentacijo
+dodaj nesinhrono delovanje, to bo eno vecjih problemov, basically vec tradeov na step
+naredi event queue, configurable latency, cash in stock reservation
+add shorting and black scholes
