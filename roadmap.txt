@@ -379,7 +379,6 @@ naredi uni GAN al kaj je ze dodaj GBM, Jump diffusion in OU s tem da extractas v
 poglej five Kenneth Frenc
 uglavnem googlaj state representation reinforcement learning TO
 naredi meta rl ki ugotovi katerega bos runnal
-add garch to RNN as a forceast to model volatility and price!! why not both, testiraj impact
 dodaj block bootstrapping
 naredi boljse trading bote - googlaj to Agent-Based Computational Finance poglej si downloadal dva cpatera useful
 naredi boljso dokumentacijo

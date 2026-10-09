@@ -56,8 +56,7 @@ class Environment(gym.Env):
 
         super().__init__()
         self.gl_counter = 0
-
-        self.windowstep = 0
+        self.history_steps = 0
 
         self.a = a
         self.b = b
@@ -137,14 +136,17 @@ class Environment(gym.Env):
             self.ticker = test_tickers[self.test_ctr % len(test_tickers)]
             self.test_ctr += 1   # FIX: was incremented twice per reset
 
-        self.windowstep = 0
         self.df = loadc(self.ticker)
         self.dfh = loadh(self.ticker)
         self.dfl = loadl(self.ticker)
         self.stock = Stock(id=self.ticker, pricepoint=None, name=self.ticker,
                         borderArr=None, sofferArr=None)
 
-        randomnum = random.randint(1, len(self.df) - 260) if tort else 1
+        warmup_steps = self.pricesarray.maxlen
+        if len(self.df) <= warmup_steps:
+            raise ValueError(f"{self.ticker} needs at least {warmup_steps + 1} bars for warm-up and trading")
+        latest_start = max(0, len(self.df) - max(260, warmup_steps + 1))
+        randomnum = random.randint(0, latest_start) if tort else 0
 
         self.portfolio = Portfolio(id=self.id, cash=self.startingcash, holdings={})
         portfolios[self.id] = self.portfolio
@@ -156,11 +158,17 @@ class Environment(gym.Env):
         self.peak = self.startingcash
 
         self.gl_counter = randomnum
+        self.history_steps = 0
         self.epsilon_prev = 0
         self.lossq = 0
         self.prevvolatility = 0
 
-        return self._get_obs(), {}
+        # Process 100 market bars without trading before giving control to RL.
+        # reset() keeps these ticks out of training rollouts and timestep counts.
+        for _ in range(warmup_steps):
+            obs, _, _, _, _ = self.step(None)
+
+        return obs, {}
 
     def _portfolio_value(self):
         qty = self.portfolio.holdings.get(self.stock.id, 0)
@@ -169,14 +177,17 @@ class Environment(gym.Env):
 
 
     def step(self, action):
-        if (self.windowstep <= 100): self.windowfilling(action)
-        else: self.realstep(action)
-        self.windowstep += 1
+        # Ignore all actions while collecting the first 100 market bars.
+        # reset() consumes these calls so RL only learns from trading steps.
+        if self.history_steps < self.pricesarray.maxlen:
+            if self.history_steps > 0:
+                self.gl_counter += 1
+            obs = self._get_obs()
+            self.history_steps += 1
+            # Leave the cursor on the last observed bar: the first trade must
+            # use that price, then advance to the next bar for its reward.
+            return obs, 0.0, False, False, {"warmup": True}
 
-    def windowfilling(self, action):
-        self._get_obs()
-    def realstep(self, action):
-        mintrade = 300
         value_before = self._portfolio_value()
         dd_before = (self.peak - value_before) / self.peak
         stock_before = self.df.iloc[self.gl_counter]
