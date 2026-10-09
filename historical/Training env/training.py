@@ -10,6 +10,10 @@ from Classes import Portfolio, Stock, PPinpoint, Order, next_order_id, nextId
 
 SEED = 20
 random.seed(SEED)
+# Fixed scales avoid fitting observation normalization on future market data.
+RETURN_SCALE = 0.02
+VOLATILITY_SCALE = math.sqrt(1e-5 / (1.0 - 0.07 - 0.90))
+SPREAD_SCALE = 0.03
 portfolios = {}
 start_date = datetime(year=2017, month=1, day=1)
 end_date = datetime(year=2021, month=1, day=1)
@@ -31,7 +35,7 @@ test_tickers = [
 ]
 
 
-tort = True #if true its trainig, else testing
+tort = False #if true its trainig, else testing
 
 
 def loadc(t):
@@ -52,6 +56,8 @@ class Environment(gym.Env):
 
         super().__init__()
         self.gl_counter = 0
+
+        self.windowstep = 0
 
         self.a = a
         self.b = b
@@ -74,11 +80,12 @@ class Environment(gym.Env):
         self.stock = Stock(id = self.ticker, pricepoint=None, name=self.ticker, borderArr=None, sofferArr=None)
         self.prevvolatility = 0
 
-        self.pricesarray = deque([0,0,0,0,0,0,0,0,0,0], maxlen=10)
-        self.volarray = deque([0,0,0,0,0,0,0,0,0,0], maxlen=10)
+        self.pricesarray = deque([0.0] * 100, maxlen=100)
+        self.volarray = deque([0.0] * 100, maxlen=100)
 
         #setting up the enviroment for the agent
-        self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(24,), dtype=np.float32)
+        obs_size = self.pricesarray.maxlen + self.volarray.maxlen + 4
+        self.observation_space = spaces.Box(low=-1.0, high=1.0, shape=(obs_size,), dtype=np.float32)
         self.action_space = spaces.Box(-1, 1, (1,), dtype=np.float32)
         self.epsilon_prev = 0
 
@@ -88,37 +95,34 @@ class Environment(gym.Env):
         low = self.dfl
         i = min(self.gl_counter, len(self.df) - 1)
 
-        price_change = 0.0 if i == 0 else (close.iloc[i] - close.iloc[i-1]) / close.iloc[i-1]
-        self.pricesarray.append(price_change)
-
-        if i == 0: re = 0.0
-        else: re = (close.iloc[i] - close.iloc[i - 1]) / close.iloc[i - 1]
+        current_price = close.iloc[i]
+        previous_price = close.iloc[i - 1] if i > 0 else current_price
+        re = (current_price - previous_price) / previous_price if previous_price > 0 else 0.0
+        self.pricesarray.append(np.tanh(re / RETURN_SCALE))
 
         self.lossq = (self.lossq * 0.5) + (min(0, re) ** 2)
 
-        spread = (high.iloc[i] - low.iloc[i]) / close.iloc[i]
+        spread = (high.iloc[i] - low.iloc[i]) / current_price if current_price > 0 else 0.0
+        spread_normalized = np.tanh(spread / SPREAD_SCALE)
 
-        cash_ratio = self.portfolio.cash / self.startingcash
+        cash_normalized = np.tanh(self.portfolio.cash / self.startingcash)
         qty = self.portfolio.holdings.get(self.stock.id, 0)
-        holdings_ratio = (qty * close.iloc[i]) / self.startingcash
+        holdings_normalized = np.tanh((qty * current_price) / self.startingcash)
 
-        lasttrade = close.iloc[i]
-        lasttrade1 = close.iloc[i - 1] if i >= 1 else close.iloc[0]
-
-        self.epsilon_prev = (lasttrade - lasttrade1) / lasttrade1 if lasttrade1 > 0 else 0
-
+        # Keep returns and volatility raw internally for the risk calculation.
+        self.epsilon_prev = re
         volatility =  math.sqrt(0.00001+  0.07 * self.epsilon_prev**2 + 0.90 * self.prevvolatility**2)
         self.prevvolatility = volatility
-        self.volarray.append(volatility)
+        self.volarray.append(np.tanh(volatility / VOLATILITY_SCALE))
 
         return np.array(
             list(self.pricesarray) +
             list(self.volarray) +
             [
-                spread,
-                cash_ratio,
-                holdings_ratio,
-                self.portfolio.cash / self.startingcash,
+                spread_normalized,
+                cash_normalized,
+                holdings_normalized,
+                cash_normalized,
             ],
             dtype=np.float32
         )
@@ -133,6 +137,7 @@ class Environment(gym.Env):
             self.ticker = test_tickers[self.test_ctr % len(test_tickers)]
             self.test_ctr += 1   # FIX: was incremented twice per reset
 
+        self.windowstep = 0
         self.df = loadc(self.ticker)
         self.dfh = loadh(self.ticker)
         self.dfl = loadl(self.ticker)
@@ -145,9 +150,9 @@ class Environment(gym.Env):
         portfolios[self.id] = self.portfolio
 
         self.pricesarray.clear()
-        self.pricesarray.extend([0.0] * 10)
+        self.pricesarray.extend([0.0] * self.pricesarray.maxlen)
         self.volarray.clear()
-        self.volarray.extend([0.0] * 10)
+        self.volarray.extend([0.0] * self.volarray.maxlen)
         self.peak = self.startingcash
 
         self.gl_counter = randomnum
@@ -164,7 +169,13 @@ class Environment(gym.Env):
 
 
     def step(self, action):
+        if (self.windowstep <= 100): self.windowfilling(action)
+        else: self.realstep(action)
+        self.windowstep += 1
 
+    def windowfilling(self, action):
+        self._get_obs()
+    def realstep(self, action):
         mintrade = 300
         value_before = self._portfolio_value()
         dd_before = (self.peak - value_before) / self.peak
@@ -259,7 +270,7 @@ class Environment(gym.Env):
         }
 
         return self._get_obs(), reward, terminated, truncated, info
-
+    
     def render(self):
         return None
 

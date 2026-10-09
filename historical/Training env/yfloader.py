@@ -11,56 +11,63 @@ tickers = [
     "LLY", "UNH", "ABBV", "MRK", "TMO", "AMGN",
     "MCD", "SBUX", "TGT", "LOW",
     "OXY", "SLB", "NEE", "SO",
-    # testing tickers (14 total)
+    # Testing tickers (14 total)
     "PANW", "NOW", "INTU", "AXP", "GILD",
     "HON", "UNP", "RTX", "LMT", "EOG",
     "LIN", "NEM", "DIA", "XLK",
 ]
 
-# Change only these two lines per period
-start_date = datetime(2021, 1, 1)
+start_date = datetime(2024, 1, 1)
 end_date = datetime(2026, 1, 1)
 
-cache_file = f"cache_{start_date.year}-{end_date.year}.txt"
+cache_file = f"cache_{start_date.year}-{end_date.year}.csv"
 
 
-def fetch_chunk(chunk, tries=4):
-    for i in range(tries):
-        df = yf.download(
-            tickers=chunk,
-            start=start_date,
-            end=end_date,
-            interval="1d",
-            auto_adjust=True,
-            progress=False,
-            threads=False,   # avoids hammering Yahoo, fewer timeouts
-            timeout=30,
-        )
-        if df is not None and not df.empty:
-            return df
-        wait = 5 * (i + 1)
-        print(f"{chunk[0]}...: attempt {i+1} failed, retrying in {wait}s")
-        time.sleep(wait)
-    return None
+def download_and_clean_data(tickers, start, end):
+    print(f"[FETCHING] Downloading data for {len(tickers)} tickers...")
+    
+    # Fetch all tickers at once (yfinance handles batching internally)
+    df = yf.download(
+        tickers=tickers,
+        start=start,
+        end=end,
+        interval="1d",
+        auto_adjust=True,
+        progress=True,
+        threads=True,
+        timeout=30,
+    )
+
+    if df.empty:
+        raise RuntimeError("Failed to fetch data from yfinance.")
+
+    # Sort multi-index columns cleanly: (Price, Ticker)
+    df = df.sort_index(axis=1)
+
+    print("[CLEANING] Handling missing values, IPO gaps, and NaNs...")
+    
+    # 1. Forward fill (carries last known price forward)
+    df = df.ffill()
+    
+    # 2. Backward fill (for stocks that hadn't had their IPO yet at start_date)
+    df = df.bfill()
+    
+    # 3. Fill any remaining isolated NaNs with 0.0
+    df = df.fillna(0.0)
+
+    # Sanity check for remaining NaNs
+    nan_count = df.isna().sum().sum()
+    if nan_count > 0:
+        print(f"[WARNING] {nan_count} NaNs remaining in DataFrame!")
+    else:
+        print("[SUCCESS] No NaNs detected in dataset.")
+
+    return df
 
 
 if __name__ == "__main__":
-    chunks = [tickers[i : i + 10] for i in range(0, len(tickers), 10)]
-    frames = []
-    for chunk in chunks:
-        df = fetch_chunk(chunk)
-        if df is None:
-            raise RuntimeError(f"Could not fetch {chunk}")
-        frames.append(df)
-        time.sleep(2)
-
-    df_all = pd.concat(frames, axis=1)
-
-    # sanity check: any ticker that came back empty?
-    got = set(df_all.columns.get_level_values(1))
-    missing = [t for t in tickers if t not in got]
-    if missing:
-        print("[WARNING] No data for:", missing)
-
+    df_all = download_and_clean_data(tickers, start_date, end_date)
+    
+    # Save clean dataset
     df_all.to_csv(cache_file)
-    print(f"[SAVED] {cache_file}  ({df_all.shape[0]} days, {len(got)} tickers)")
+    print(f"[SAVED] {cache_file} ({df_all.shape[0]} rows, {df_all.shape[1]} columns)")

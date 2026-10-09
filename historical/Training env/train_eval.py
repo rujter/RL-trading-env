@@ -1,12 +1,12 @@
 import pathlib
-
 import numpy as np
 from stable_baselines3 import PPO, SAC
+from stable_baselines3.common.callbacks import CheckpointCallback
 from stable_baselines3.common.env_checker import check_env
 from stable_baselines3.common.utils import set_random_seed
 
 from training import Environment, tort           
-from Classes import policy_kwargs_cnn             
+from Classes import policy_kwargs_def             
 import config as C
 
 MODELS_DIR = pathlib.Path("models")
@@ -68,8 +68,17 @@ def main():
             if tort:
                 print(f"Training {name}")
                 agent = PPO("MlpPolicy", env, seed=seed, verbose=1, ent_coef=0.005,
-                            policy_kwargs=policy_kwargs_cnn, learning_rate=3e-4)
-                agent.learn(total_timesteps=C.TOTAL_TIMESTEPS, log_interval=1)
+                            policy_kwargs=policy_kwargs_def, learning_rate=3e-4, device="cpu")
+                checkpoint_callback = None
+                if C.CHECKPOINT_FREQ > 0:
+                    checkpoint_callback = CheckpointCallback(
+                        save_freq=max(C.CHECKPOINT_FREQ // agent.n_envs, 1),
+                        save_path=str(MODELS_DIR / "checkpoints" / name),
+                        name_prefix=name,
+                        verbose=2,
+                    )
+                agent.learn(total_timesteps=C.TOTAL_TIMESTEPS, log_interval=1,
+                            callback=checkpoint_callback)
                 agent.save(model_file)
             else:
                 if not model_file.exists():

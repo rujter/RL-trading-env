@@ -33,40 +33,43 @@ with entrophy coef 10x less its way better
 probaj 2,1,0.05 tam okoli
 6.10 crazy, sm naredu heatmap. it underperforms always by like alpha 6% which is an upgrade. Might try more train dates. did hella compute, didnt really find anything out. claude fixed the metrics and some graphs. made a research paper template so im more organised
 humanised some code.
+7.10 learned how to use gpu to train, calculated the compute time, updated resume, finished the research framing, humanised some code. added gru, realised that i passed in past 10 prices into cnn that differ eacross the stocks because i changed that
+8.10 added 2d cnn, figured out some issues
+9.10 made the volarray and prices array 100, added that first 100 steps the window fills so cnn can get relevant info, fixed 1dcnn, fixed da ima None def dejanski obs ker prej ni imel nic (se mi zdi)
+cnn deluje tako da najprej na 1. delnici naredi weights, pol ko gre na drugo jih pocasi spremnija, vsakic reset, normalised the obs space
 
-What Matters for a Reinforcement Learning Stock Trader? An Ablation of Architecture, Observation Window, Reward and Algorithm
+IMM TO DO:
+naredi boljso dokumentacijo
+write article and show professors, if none reccomend magazines do medium, SSRN, github and reddit
+
+POTENTIAL ISSUES:
+cnn ki reseta vsako novo delnico, mogoce ne bi rabu
+
+What Matters for a Reinforcement Learning Stock Trader? An Ablation of Architecture, Observation Window and Reward
 HIPOTEZE:
 higher value of a (outperforming the market) makes the agent more risk aware (lower sortino) but at the same time also less profitable as opposed to b (general profit)
 agent with a 2d cnn will significantly outperform the bare agent, the gru one will come in second
-the observation space of 0 will perofrm the worst, with 20 and 60 better respectively
-ppo as it is an on policy algorithm will perform worse than sac given the 250k steps as it has a replay buffer
+agents that trained on more steps will significantly outperform those that
+the observation space of 5 will perform worse than 20
 
 5 seeds each
-REWARD 3X3 cell vedno ugotovi kateri so pametni da runnam w selected a and b sweeps (centre 0.75a, 1,5b with with 0.4 increments)
-250k steps each with snapshots in time
-ARCHITECTURE: BARE, 2D CNN, GRU
-LOOKBACK WINDOW: 5, 20, 60
-ALGORITHM: PPO, SAC
+REWARD 2X2 cell vedno ugotovi kateri so pametni da runnam w selected a and b sweeps (1a, 1.5b middle, with 0.3a and 0.5b)
+1m steps each with snapshots in time
+ARCHITECTURE: BARE, 1D CNN, GRU
+LOOKBACK WINDOW: 5, 20
 
 100 delnic, 10 sektorjev (70 training, 30 testing)
 bodi pozoren na survivorship bias
-
 1	2008-2018	2019-2020	COVID crash and rebound
 2	2008-2020	2021-2022	Rate-shock bear market
 3	2008-2025	2026		Untouched, plus paper trading
 
 Metrics: raw return vs buy and hold, max drawdown, sortino, sharpe, calmar, omega, alpha, beta
 
-SAC is 10k steps: 106sec/10k steps
-PPO is 10k steps: 9sec/10k steps
-
-IMM TO DO:
-naredi 2d convoltuion se z enim arrayem tako kot prices 
-naredi boljso dokumentacijo
-humanise some code
-learn how to do snapshots in time
-learn how to change to gpu training
-izracunaj cas
+CPU:
+PPO: 86k steps per min, 1mil run je 700sec
+add a small lambda experiment to show why i set it at 0
+5 x 2 x 2 x 3 x 2 x 3 = 70ur (1m steps each) 
 
 RESOURCES
 intro:
@@ -240,17 +243,20 @@ LTSM:
 	"MY NAME I" CE POGLEDAMO NAZAJ JA je "s" + pac etc etc
 	
 	IMA INPUT: procesira: output
+	IMPOT: ht-1, x
 	output is provided with the input in the next step
 	dodamo internal state? 
 	
 	state je dodaten cell: 
-	1. forget gate:  kaj pozabit
+	1. forget gate:  kaj pozabit (basically s prejsnjim cell statom)
 	2. input gate: kaj dodat
 	3. output gate: kaj z vsem kaj je storano kaj outputat
 	
 	martin is buying apples
 	martin - m, 
 	apples - plural
+
+	cell state se shrani, hidden state passa naprej
 	 
 	output sproti daja podatke ht brez da brise etc current podatek
 	ko pride nek she ugotovi da je podobno alice in to outputa da je to strong connection in shrani she blizu alice
@@ -267,11 +273,17 @@ GRU:
 	
 	reset gate: How much past memory should I ignore when computing new candidate information?" ko temp je reset 0 
 	Update Gate ($z_t$): Combines the roles of LSTM's Forget and Input gates—decides how much of the previous state to keep vs. how much new candidate state to blend in. ce je z visok da not. 
-	space je limited tako da v ht napise tudi state
-	
+	space je limited tako da v ht napise tudi state 
+
+	ZT je update 0 keep old, 1 overwrite. how much ht-1 pride naprej. 
+
+
+	reset je samo 1 al 0
+	update koliko 
+
 	ko pa pride she je r visok in linka se to tako kot LTSM
 	
-	nima dodatnega cell statea
+	nima dodatnega cell statea (direktno spremeni hidden state z zt ki pove kolko naj obdzi) reset gate
 	HIDDEN STATE JE SESTAVLJEN IZ TEH
 	poglej enacbe
 	

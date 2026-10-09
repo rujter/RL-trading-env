@@ -1,19 +1,20 @@
-START_SEED = 30
-NUM_SEEDS = 20
+START_SEED = 36
+NUM_SEEDS = 1
 SEEDS = list(range(START_SEED, START_SEED + NUM_SEEDS))
 
 TARGET_CONFIGS = [
-    (0.75, 1.60),
-    (0.75, 1.30),
-    (0.50, 2.20),
-    (1.25, 1.90),
+    (0.75, 1.30)
+    #(0.75, 1.30),
+    #(0.50, 2.20),
+    #(1.25, 1.90),
 ]
 FIXED_LAMBDA = 0.0
 
-TOTAL_TIMESTEPS = 50_000
+TOTAL_TIMESTEPS = 1500_000
+CHECKPOINT_FREQ = 100_000  # Save every N training timesteps; 0 disables snapshots.
 MODEL_PREFIX = f"ppo{TOTAL_TIMESTEPS // 1000}kcnn"
 
-N_EVAL_EPISODES = 14
+N_EVAL_EPISODES = 50
 STARTING_CASH = 10_000.0
 EVAL_DETERMINISTIC = True
 

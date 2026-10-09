@@ -16,8 +16,7 @@ eval_plots/
 eval_results/
 models/
 
-cache.txt
-cache2125.txt
+.gitignore
 
 
 token.txt
