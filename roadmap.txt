@@ -37,8 +37,14 @@ humanised some code.
 8.10 added 2d cnn, figured out some issues
 9.10 made the volarray and prices array 100, added that first 100 steps the window fills so cnn can get relevant info, fixed 1dcnn, fixed da ima None def dejanski obs ker prej ni imel nic (se mi zdi)
 cnn deluje tako da najprej na 1. delnici naredi weights, pol ko gre na drugo jih pocasi spremnija, vsakic reset, normalised the obs space
+12.10 added data lookbackj window and architecture in the execution run.py to run quicker and more systematically
+13.10 popravu malo kodo
 
 IMM TO DO:
+fixaj analyse
+fixaj lookahead biav v yfloader backwards fill
+dodaj v ime modela vse kar rabi
+uglavnem za automaticno trainanje in testiranje
 naredi boljso dokumentacijo
 write article and show professors, if none reccomend magazines do medium, SSRN, github and reddit
 
@@ -56,7 +62,7 @@ the observation space of 5 will perform worse than 20
 REWARD 2X2 cell vedno ugotovi kateri so pametni da runnam w selected a and b sweeps (1a, 1.5b middle, with 0.3a and 0.5b)
 1m steps each with snapshots in time
 ARCHITECTURE: BARE, 1D CNN, GRU
-LOOKBACK WINDOW: 5, 20
+LOOKBACK WINDOW: 5, 100
 
 100 delnic, 10 sektorjev (70 training, 30 testing)
 bodi pozoren na survivorship bias
@@ -67,9 +73,9 @@ bodi pozoren na survivorship bias
 Metrics: raw return vs buy and hold, max drawdown, sortino, sharpe, calmar, omega, alpha, beta
 
 CPU:
-PPO: 86k steps per min, 1mil run je 700sec
+PPO: 86k steps per min, 500K run je 350sec
 add a small lambda experiment to show why i set it at 0
-5 x 2 x 2 x 3 x 2 x 3 = 70ur (1m steps each) 
+5 x 2 x 2 x 3 x 2 x 3 = 35ur (500K steps each) 
 
 RESOURCES
 intro:

@@ -7,20 +7,19 @@ import pandas as pd
 from collections import deque
 import math
 from Classes import Portfolio, Stock, PPinpoint, Order, next_order_id, nextId
+from config import LOOKBACK
+
 
 SEED = 20
 random.seed(SEED)
-# Fixed scales avoid fitting observation normalization on future market data.
 RETURN_SCALE = 0.02
 VOLATILITY_SCALE = math.sqrt(1e-5 / (1.0 - 0.07 - 0.90))
 SPREAD_SCALE = 0.03
 portfolios = {}
 start_date = datetime(year=2017, month=1, day=1)
 end_date = datetime(year=2021, month=1, day=1)
-dataframe = pd.read_csv("cache.txt", header=[0,1], skiprows=[2], index_col=0)
 
 tickers = [
-    # Strong uptrend (winners)
     "AMZN", "META", "AVGO", "ORCL", "CRM",
     "QCOM", "ADBE", "AMAT", "MU", "GE",
     "BAC", "WFC", "MS", "GS", "BLK", "C",
@@ -38,23 +37,22 @@ test_tickers = [
 tort = False #if true its trainig, else testing
 
 
-def loadc(t):
-    return dataframe["Close"][t]
-def loadh(t):
-    return dataframe["High"][t]
-def loadl(t):
-    return dataframe["Low"][t]
-
 class Environment(gym.Env):
 
     def __init__(self,
+                 dataframe,
                  startingcash = 5000,
                  id = 1,
                  lam = 0.2, 
                  a = 0.5,
-                 b = 2):
+                 b = 2,
+                 lookback_window = LOOKBACK):
 
         super().__init__()
+        self.dataframe = dataframe
+        if lookback_window not in (100, 5):
+            raise ValueError("lookback_window must be 100 or 5")
+        self.lookback_window = int(lookback_window)
         self.gl_counter = 0
         self.history_steps = 0
 
@@ -70,17 +68,17 @@ class Environment(gym.Env):
         self.peak = self.startingcash
         self.ticker = tickers[0] if tort else test_tickers[0]
 
-        self.df = loadc(self.ticker)
-        self.dfl = loadl(self.ticker)
-        self.dfh = loadh(self.ticker)
+        self.df = self.dataframe["Close"][self.ticker]
+        self.dfl = self.dataframe["Low"][self.ticker]
+        self.dfh = self.dataframe["High"][self.ticker]
 
         portfolios[self.id] = Portfolio(id = self.id, cash = startingcash, holdings={})
         self.portfolio = portfolios[self.id]
         self.stock = Stock(id = self.ticker, pricepoint=None, name=self.ticker, borderArr=None, sofferArr=None)
         self.prevvolatility = 0
 
-        self.pricesarray = deque([0.0] * 100, maxlen=100)
-        self.volarray = deque([0.0] * 100, maxlen=100)
+        self.pricesarray = deque([0.0] * self.lookback_window, maxlen=self.lookback_window)
+        self.volarray = deque([0.0] * self.lookback_window, maxlen=self.lookback_window)
 
         #setting up the enviroment for the agent
         obs_size = self.pricesarray.maxlen + self.volarray.maxlen + 4
@@ -108,7 +106,6 @@ class Environment(gym.Env):
         qty = self.portfolio.holdings.get(self.stock.id, 0)
         holdings_normalized = np.tanh((qty * current_price) / self.startingcash)
 
-        # Keep returns and volatility raw internally for the risk calculation.
         self.epsilon_prev = re
         volatility =  math.sqrt(0.00001+  0.07 * self.epsilon_prev**2 + 0.90 * self.prevvolatility**2)
         self.prevvolatility = volatility
@@ -129,16 +126,15 @@ class Environment(gym.Env):
     def reset(self, seed=None, options=None):
         super().reset(seed=seed, options=options)
 
-        # used the same ticker (AAPL in training, GOOGL in testing).
         if tort:
             self.ticker = random.choice(tickers)
         else:
             self.ticker = test_tickers[self.test_ctr % len(test_tickers)]
-            self.test_ctr += 1   # FIX: was incremented twice per reset
+            self.test_ctr += 1  
 
-        self.df = loadc(self.ticker)
-        self.dfh = loadh(self.ticker)
-        self.dfl = loadl(self.ticker)
+        self.df = self.dataframe["Close"][self.ticker]
+        self.dfh = self.dataframe["High"][self.ticker]
+        self.dfl = self.dataframe["Low"][self.ticker]
         self.stock = Stock(id=self.ticker, pricepoint=None, name=self.ticker,
                         borderArr=None, sofferArr=None)
 
@@ -163,8 +159,6 @@ class Environment(gym.Env):
         self.lossq = 0
         self.prevvolatility = 0
 
-        # Process 100 market bars without trading before giving control to RL.
-        # reset() keeps these ticks out of training rollouts and timestep counts.
         for _ in range(warmup_steps):
             obs, _, _, _, _ = self.step(None)
 
@@ -177,15 +171,12 @@ class Environment(gym.Env):
 
 
     def step(self, action):
-        # Ignore all actions while collecting the first 100 market bars.
-        # reset() consumes these calls so RL only learns from trading steps.
+
         if self.history_steps < self.pricesarray.maxlen:
             if self.history_steps > 0:
                 self.gl_counter += 1
             obs = self._get_obs()
             self.history_steps += 1
-            # Leave the cursor on the last observed bar: the first trade must
-            # use that price, then advance to the next bar for its reward.
             return obs, 0.0, False, False, {"warmup": True}
 
         value_before = self._portfolio_value()
@@ -213,7 +204,6 @@ class Environment(gym.Env):
         if order_action == "buy":
             budget = num * self.portfolio.cash
             
-            # largest whole number of shares where cost + fee still fits in the budget
             ordersize = int(budget // (priceref * fee_factor))
             while ordersize > 0:
                 cost = ordersize * priceref
