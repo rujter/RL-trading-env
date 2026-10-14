@@ -2,6 +2,7 @@
 *.zip
 *.png
 *.npz
+!diagram.png
 
 
 # Ignore a folder named 'my_folder' anywhere in the project
