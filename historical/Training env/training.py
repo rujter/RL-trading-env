@@ -216,17 +216,22 @@ class Environment(gym.Env):
         transaction_fee = 0.0035
         minfee = 3
         fee_factor = 1 + transaction_fee
+        fill_price = None
 
         #fills the price at the open, already decides the move beforehand
+        #slippage is basedon k * prevvolatility so it doesnt fill at exactly the price you wanted
         priceref = self.df.iloc[self.gl_counter + 1]
+        slip = min(0.05 * self.prevvolatility, 0.01)
+        fill_buy = priceref * (1 + slip)
+        fill_sell = priceref * (1 - slip)
 
         num = min(1.0, abs(act))
         if order_action == "buy":
             budget = num * self.portfolio.cash
             
-            ordersize = int(budget // (priceref * fee_factor))
+            ordersize = int(budget // (fill_buy * fee_factor))
             while ordersize > 0:
-                cost = ordersize * priceref
+                cost = ordersize * fill_buy
                 fee = max(minfee, cost * transaction_fee)
                 if cost + fee <= budget:
                     break
@@ -235,6 +240,7 @@ class Environment(gym.Env):
             if ordersize > 0:
                 self.portfolio.cash -= (cost + fee)
                 self.portfolio.holdings[self.stock.id] = self.portfolio.holdings.get(self.stock.id, 0) + ordersize
+                fill_price = fill_buy
             else:
                 order_action = "hold"
 
@@ -247,14 +253,14 @@ class Environment(gym.Env):
 
                 if ordersize > 0:
 
-                    proceeds = ordersize * priceref #torej kolko zasluzis ce prodas
+                    proceeds = ordersize * fill_sell #torej kolko zasluzis ce prodas
                     fee = proceeds * transaction_fee if (proceeds * transaction_fee) >= 3 else 3.0
 
                     self.portfolio.cash += (proceeds - fee)
                     self.portfolio.holdings[self.stock.id] -= ordersize
                     if self.portfolio.holdings[self.stock.id] == 0:
                         del self.portfolio.holdings[self.stock.id]
-
+                    fill_price = fill_sell
                 else: order_action = "hold"
             else: order_action = "hold"
 
@@ -283,11 +289,12 @@ class Environment(gym.Env):
         elif order_action == "sell":
             ordernum = 2
 
+        #the price we filled at 
         info = {
             "reward": float(reward),
             "ordernum": float(ordernum),
             "val": float(value_after),
-            "price": float(priceref),
+            "price": float(fill_price)
         }
 
         return self._get_obs(), reward, terminated, truncated, info
