@@ -12,11 +12,10 @@ import config
 from metrics import episode_metrics
 
 RNG = np.random.default_rng(0)
-
-
 def load_run(path):
+    
+    #loading the runs and data
     rows = []
-
     with np.load(path) as data:
         starting_cash = float(data["startingcash"])
 
@@ -28,8 +27,7 @@ def load_run(path):
                 shares=data["shares"][episode],
                 orders=data["order"][episode],
                 start_cash=starting_cash,
-                ppy=config.PERIODS_PER_YEAR,
-                cost_bps=config.COST_BPS,
+                ppy=config.PERIODS_PER_YEAR
             )
             metrics["ticker"] = str(data["tickers"][episode_id])
             rows.append(metrics)
@@ -46,9 +44,6 @@ def collect(eval_dir, architecture, data_name, lookback):
             path = eval_dir / (
                 f"eval_results_{config.MODEL_PREFIX}_s{seed}_a{a:.2f}_b{b:.2f}_arch:{architecture}_data:{data_name}_lookback:{lookback}.npz"
             )
-            if not path.exists():
-                print(f"Missing evaluation: {path.name}")
-                continue
 
             for result in load_run(path):
                 agent_results.append({**result, "seed": seed, "a": a, "b": b})
@@ -177,8 +172,7 @@ def plot_equity_curves(eval_dir, out_dir, architecture, DATA, lookback, seed=Non
     path = eval_dir / (
         f"eval_results_{config.MODEL_PREFIX}_s{seed}_a{a:.2f}_b{b:.2f}_arch:{architecture}_data:{DATA}_lookback:{lookback}.npz"
     )
-    if not path.exists():
-        return
+    if not path.exists(): return
 
     with np.load(path) as data:
         starting_cash = float(data["startingcash"])

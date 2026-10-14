@@ -222,7 +222,7 @@ class Custom2dCNN(BaseFeaturesExtractor):
 
 ############################################DICTIONARIES ######################################ž
 
-# The default MLP extractor takes its input size from observation_space.
+#kwarg dictionaries for observation space for the agent
 policy_kwargs_def_100 = {}
 
 policy_kwargs_cnn_100 = dict(
@@ -309,10 +309,10 @@ policy_kwargs_gru = policy_kwargs_gru_100
 
 
 def get_policy_kwargs(lookback, architecture):
-    """Size the feature extractor for the selected observation window."""
     from copy import deepcopy
     from numbers import Integral
 
+    #making a copy of the kwargs dictionary so its not overridden
     if isinstance(lookback, bool) or not isinstance(lookback, Integral) or lookback <= 0:
         raise ValueError("lookback must be a positive integer")
     kwargs = deepcopy(POLICY_KWARGS_BY_LOOKBACK[100][architecture])

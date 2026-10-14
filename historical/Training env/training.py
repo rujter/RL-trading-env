@@ -88,25 +88,29 @@ class Environment(gym.Env):
         self.epsilon_prev = 0
 
     def _get_obs(self):
+        
         close = self.df
         high = self.dfh
         low = self.dfl
         i = min(self.gl_counter, len(self.df) - 1)
 
+        #adding current price to pricesarray
         current_price = close.iloc[i]
         previous_price = close.iloc[i - 1] if i > 0 else current_price
         re = (current_price - previous_price) / previous_price if previous_price > 0 else 0.0
         self.pricesarray.append(np.tanh(re / RETURN_SCALE))
 
-        self.lossq = (self.lossq * 0.5) + (min(0, re) ** 2)
-
+        #spread calculation
         spread = (high.iloc[i] - low.iloc[i]) / current_price if current_price > 0 else 0.0
         spread_normalized = np.tanh(spread / SPREAD_SCALE)
 
+        #normalising the cash and holdings using the tanh function
+        #tanh function is used to normalise all data between [0,1]
         cash_normalized = np.tanh(self.portfolio.cash / self.startingcash)
         qty = self.portfolio.holdings.get(self.stock.id, 0)
         holdings_normalized = np.tanh((qty * current_price) / self.startingcash)
 
+        #calculates the volatility using garch formula
         self.epsilon_prev = re
         volatility =  math.sqrt(0.00001+  0.07 * self.epsilon_prev**2 + 0.90 * self.prevvolatility**2)
         self.prevvolatility = volatility
@@ -156,7 +160,7 @@ class Environment(gym.Env):
 
         self.gl_counter = randomnum
         self.history_steps = 0
-        self.epsilon_prev = 0
+        self.epsilon_prev = 0 #volatility formula use case in obs calc
         self.lossq = 0
         self.prevvolatility = 0
 
@@ -181,6 +185,7 @@ class Environment(gym.Env):
 
     def step(self, action):
 
+        #warmup steps to fill the cnn and gru buffer
         if self.history_steps < self.pricesarray.maxlen:
             if self.history_steps > 0:
                 self.gl_counter += 1
@@ -188,6 +193,7 @@ class Environment(gym.Env):
             self.history_steps += 1
             return obs, 0.0, False, False, {"warmup": True}
 
+        #episode end
         if self.gl_counter >= len(self.df) - 1:
             raise RuntimeError("Episode has ended; call reset() before step().")
 
@@ -211,6 +217,7 @@ class Environment(gym.Env):
         minfee = 3
         fee_factor = 1 + transaction_fee
 
+        #fills the price at the open, already decides the move beforehand
         priceref = self.df.iloc[self.gl_counter + 1]
 
         num = min(1.0, abs(act))
@@ -233,7 +240,6 @@ class Environment(gym.Env):
 
 
         elif order_action == "sell":
-
             current_holdings = self.portfolio.holdings.get(self.stock.id, 0)
 
             if current_holdings > 0:
@@ -263,6 +269,7 @@ class Environment(gym.Env):
         port_ret = (value_after - value_before) / value_before
         stock_ret = (stock_after - stock_before) / stock_before
 
+        #drawdown calculation
         self.peak = max(self.peak, value_after)
         dd_after = (self.peak - value_after) / self.peak
         dd_increase = max(0.0, dd_after - dd_before)
