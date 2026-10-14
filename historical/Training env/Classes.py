@@ -84,7 +84,7 @@ class CustomCNN(BaseFeaturesExtractor):
 
   def forward(self, observations: th.Tensor) -> th.Tensor:
     priceobs = observations[:, : self.price_features]
-    volobs = observations[:, self.vol_features : self.vol_features + self.price_features]
+    volobs = observations[:, self.price_features : self.price_features + self.vol_features]
     ind = observations[:, self.price_features + self.vol_features :] 
 
     cnn_comb=th.stack([priceobs, volobs], dim=1) 
@@ -131,26 +131,6 @@ class CustomRNN(BaseFeaturesExtractor):
         combined = th.cat([last_hidden, ind], dim=1) 
         return self.linear(combined)
 
-policy_kwargs_def = dict(
-    features_extractor_kwargs=dict(
-        price_features=100, ind_features=4, vol_features=100, features_dim=128
-    ),
-)
-
-policy_kwargs_cnn = dict(
-    features_extractor_class=CustomCNN,
-    features_extractor_kwargs=dict(
-        price_features=100, ind_features=4, vol_features=100, features_dim=128
-    ),
-)
-
-policy_kwargs_rnn = dict(
-    features_extractor_class=CustomRNN,
-    features_extractor_kwargs=dict(
-        price_features=100, ind_features=104, hidden_size=64, features_dim=128
-    ),
-)
-
 ######################################## GRU FOR PPO ####################################################3
 
 import torch
@@ -193,20 +173,10 @@ class CustomGRU(BaseFeaturesExtractor):
         combined = th.cat([last_hidden, ind], dim=1)
         return self.linear(combined)
 
-policy_kwargs_gru = dict(
-    features_extractor_class=CustomGRU,
-    features_extractor_kwargs=dict(
-        price_features=100, 
-        ind_features=104, 
-        hidden_size=64, 
-        features_dim=128
-    ),
-)
-
 ############################################CNN FOR PPO/SAC ######################################ž
 class Custom2dCNN(BaseFeaturesExtractor):
 
-  def init(
+  def __init__(
       self,
       observation_space: spaces.Box,
       features_dim: int = 128,
@@ -215,7 +185,7 @@ class Custom2dCNN(BaseFeaturesExtractor):
       ind_features: int = 4,
     ):
 
-    super().init(observation_space, features_dim)
+    super().__init__(observation_space, features_dim)
 
     self.price_features = price_features
     self.ind_features = ind_features
@@ -238,7 +208,7 @@ class Custom2dCNN(BaseFeaturesExtractor):
 
   def forward(self, observations: th.Tensor) -> th.Tensor:
     priceobs = observations[:, : self.price_features]
-    volobs = observations[:, self.vol_features : self.vol_features + self.price_features]
+    volobs = observations[:, self.price_features : self.price_features + self.vol_features]
     ind = observations[:, self.price_features + self.vol_features :] 
 
     cnn_comb=th.stack([priceobs, volobs], dim=1).unsqueeze(2) #doda se visino ker je moj 1d tipo za 1d cnn
@@ -250,9 +220,89 @@ class Custom2dCNN(BaseFeaturesExtractor):
 
     return self.linear(combined)
 
-policy_kwargs_2dcnn = dict(
+############################################DICTIONARIES ######################################ž
+
+# The default MLP extractor takes its input size from observation_space.
+policy_kwargs_def_100 = {}
+
+policy_kwargs_cnn_100 = dict(
+    features_extractor_class=CustomCNN,
+    features_extractor_kwargs=dict(
+        price_features=100, ind_features=4, vol_features=100, features_dim=128
+    ),
+)
+
+policy_kwargs_rnn_100 = dict(
+    features_extractor_class=CustomRNN,
+    features_extractor_kwargs=dict(
+        price_features=100, ind_features=104, hidden_size=64, features_dim=128
+    ),
+)
+
+policy_kwargs_2dcnn_100 = dict(
     features_extractor_class=Custom2dCNN,
     features_extractor_kwargs=dict(
         price_features=100, ind_features=4, vol_features=100, features_dim=128
     ),
 )
+
+policy_kwargs_gru_100 = dict(
+    features_extractor_class=CustomGRU,
+    features_extractor_kwargs=dict(
+        price_features=100, ind_features=104, hidden_size=64, features_dim=128
+    ),
+)
+
+policy_kwargs_def_5 = {}
+
+policy_kwargs_cnn_5 = dict(
+    features_extractor_class=CustomCNN,
+    features_extractor_kwargs=dict(
+        price_features=5, ind_features=4, vol_features=5, features_dim=128
+    ),
+)
+
+policy_kwargs_rnn_5 = dict(
+    features_extractor_class=CustomRNN,
+    features_extractor_kwargs=dict(
+        price_features=5, ind_features=9, hidden_size=64, features_dim=128
+    ),
+)
+
+policy_kwargs_2dcnn_5 = dict(
+    features_extractor_class=Custom2dCNN,
+    features_extractor_kwargs=dict(
+        price_features=5, ind_features=4, vol_features=5, features_dim=128
+    ),
+)
+
+policy_kwargs_gru_5 = dict(
+    features_extractor_class=CustomGRU,
+    features_extractor_kwargs=dict(
+        price_features=5, ind_features=9, hidden_size=64, features_dim=128
+    ),
+)
+
+POLICY_KWARGS_BY_LOOKBACK = {
+    100: {
+        "def": policy_kwargs_def_100,
+        "cnn": policy_kwargs_cnn_100,
+        "rnn": policy_kwargs_rnn_100,
+        "2dcnn": policy_kwargs_2dcnn_100,
+        "gru": policy_kwargs_gru_100,
+    },
+    5: {
+        "def": policy_kwargs_def_5,
+        "cnn": policy_kwargs_cnn_5,
+        "rnn": policy_kwargs_rnn_5,
+        "2dcnn": policy_kwargs_2dcnn_5,
+        "gru": policy_kwargs_gru_5,
+    },
+}
+
+# Preserve the existing 100-day imports.
+policy_kwargs_def = policy_kwargs_def_100
+policy_kwargs_cnn = policy_kwargs_cnn_100
+policy_kwargs_rnn = policy_kwargs_rnn_100
+policy_kwargs_2dcnn = policy_kwargs_2dcnn_100
+policy_kwargs_gru = policy_kwargs_gru_100

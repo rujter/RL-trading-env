@@ -1,5 +1,5 @@
 import numpy as np
-def _div(a, b):
+def dividecheck(a, b):
     return float(a / b) if b != 0 else np.nan
 
 
@@ -16,20 +16,20 @@ def max_drawdown(equity, start_cash):
 
 def sharpe(r, ppy):
     sd = r.std(ddof=1) if len(r) > 1 else 0.0
-    return _div(r.mean(), sd) * np.sqrt(ppy)
+    return dividecheck(r.mean(), sd) * np.sqrt(ppy)
 
 
 def sortino(r, ppy, target=0.0):
     diff = r - target
     downside_std = np.sqrt(np.mean(np.minimum(0.0, diff) ** 2))
-    return _div(diff.mean(), downside_std) * np.sqrt(ppy)
+    return dividecheck(diff.mean(), downside_std) * np.sqrt(ppy)
 
 
 def omega(r, target=0.0):
     diff = r - target
     gains = np.maximum(0.0, diff).sum()
     losses = np.maximum(0.0, -diff).sum()
-    return _div(gains, losses)
+    return dividecheck(gains, losses)
 
 
 def cagr(equity, start_cash, ppy):
@@ -84,7 +84,7 @@ def episode_metrics(equity, price, shares, orders, start_cash, ppy=252, cost_bps
         "omega": omega(r),
         "maxdd": mdd * 100.0,
         "hold_maxdd": max_drawdown(hold_eq, start_cash) * 100.0,
-        "calmar": _div(cagr(net_eq, start_cash, ppy), mdd),
+        "calmar": dividecheck(cagr(net_eq, start_cash, ppy), mdd),
         "hold_sharpe": sharpe(r_hold, ppy),
         "beta": beta,
         "alpha": alpha,
