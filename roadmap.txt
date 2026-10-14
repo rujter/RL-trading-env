@@ -39,13 +39,10 @@ humanised some code.
 cnn deluje tako da najprej na 1. delnici naredi weights, pol ko gre na drugo jih pocasi spremnija, vsakic reset, normalised the obs space
 12.10 added data lookbackj window and architecture in the execution run.py to run quicker and more systematically
 13.10 popravu malo kodo
+14.10 fix lookahead bias tako da removal backfill ampak da warmup skippa tiste vlaue kjer je 0, dodal v name modela use stvari, popravu analsys za spremenjnjena imena
 
 IMM TO DO:
 naredi boljso dokumentacijo
-write article and show professors, if none reccomend magazines do medium, SSRN, github and reddit
-
-POTENTIAL ISSUES:
-cnn ki reseta vsako novo delnico, mogoce ne bi rabu
 
 What Matters for a Reinforcement Learning Stock Trader? An Ablation of Architecture, Observation Window and Reward
 HIPOTEZE:

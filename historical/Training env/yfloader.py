@@ -36,8 +36,6 @@ def download_and_clean_data(tickers, start, end):
     )
     df = df.sort_index(axis=1)
     df = df.ffill()
-    
-    df = df.bfill() #TO PREVERI KAR JE LOOKAHEAD BIAS
     df = df.fillna(0.0)
 
 

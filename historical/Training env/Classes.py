@@ -306,3 +306,21 @@ policy_kwargs_cnn = policy_kwargs_cnn_100
 policy_kwargs_rnn = policy_kwargs_rnn_100
 policy_kwargs_2dcnn = policy_kwargs_2dcnn_100
 policy_kwargs_gru = policy_kwargs_gru_100
+
+
+def get_policy_kwargs(lookback, architecture):
+    """Size the feature extractor for the selected observation window."""
+    from copy import deepcopy
+    from numbers import Integral
+
+    if isinstance(lookback, bool) or not isinstance(lookback, Integral) or lookback <= 0:
+        raise ValueError("lookback must be a positive integer")
+    kwargs = deepcopy(POLICY_KWARGS_BY_LOOKBACK[100][architecture])
+    if architecture != "def":
+        features = kwargs["features_extractor_kwargs"]
+        features["price_features"] = int(lookback)
+        if architecture in ("cnn", "2dcnn"):
+            features["vol_features"] = int(lookback)
+        else:
+            features["ind_features"] = int(lookback) + 4
+    return kwargs

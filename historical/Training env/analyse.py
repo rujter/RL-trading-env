@@ -3,7 +3,6 @@ from pathlib import Path
 
 import matplotlib
 
-matplotlib.use("Agg")  # Save plots without opening a window.
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -38,21 +37,23 @@ def load_run(path):
     return rows
 
 
-def collect(eval_dir):
+def collect(eval_dir, architecture, data_name, lookback):
     agent_results = []
     random_results = []
-    missing_files = 0
 
     for seed in config.SEEDS:
-        for a, b in config.TARGET_CONFIGS:
+        for a, b in dict.fromkeys(config.TARGET_CONFIGS):
             path = eval_dir / (
-                f"eval_results_{config.MODEL_PREFIX}_s{seed}_a{a:.2f}_b{b:.2f}.npz"
+                f"eval_results_{config.MODEL_PREFIX}_s{seed}_a{a:.2f}_b{b:.2f}_arch:{architecture}_data:{data_name}_lookback:{lookback}.npz"
             )
+            if not path.exists():
+                print(f"Missing evaluation: {path.name}")
+                continue
 
             for result in load_run(path):
                 agent_results.append({**result, "seed": seed, "a": a, "b": b})
 
-        random_path = eval_dir / f"eval_results_random_s{seed}.npz"
+        random_path = eval_dir / f"eval_results_random_s{seed}_data:{data_name}_lookback:{lookback}.npz"
         if random_path.exists():
             for result in load_run(random_path):
                 random_results.append({**result, "seed": seed})
@@ -116,9 +117,9 @@ def cell_summary(seed_results, random_return):
 
 def return_label(result):
     return (
-        f"Agent: {result.ret_med:.1f}% [{result.ret_lo:.1f}, {result.ret_hi:.1f}]\n"
+        f"Agent: {result.ret_med:.1f}%\n"
         f"Hold: {result.hold:.1f}% | Rand: {result.random:.1f}%\n"
-        f"Excess: {result.excess_med:+.1f} [{result.excess_lo:.1f}, {result.excess_hi:.1f}]\n"
+        f"Excess: {result.excess_med:+.1f}\n"
         f"P(beat): {result.p_beat_hold:.0%} (n={int(result.n_seeds)})\n"
         f"Exp: {result.exposure:.0%} | Turn: {result.turnover:.1f}x\n"
         f"B/S/H: {result.buys:.0f}/{result.sells:.0f}/{result.holds:.0f}"
@@ -171,14 +172,10 @@ def heatmap(summary, metric, label, title, colorbar_label, cmap, output_path, ce
     plt.close(figure)
 
 
-def plot_equity_curves(eval_dir, out_dir, seed=None, a=None, b=None):
-    if seed is None:
-        seed = config.SEEDS[0]
-    if a is None or b is None:
-        a, b = config.TARGET_CONFIGS[0]
+def plot_equity_curves(eval_dir, out_dir, architecture, DATA, lookback, seed=None, a=None, b=None):
 
     path = eval_dir / (
-        f"eval_results_{config.MODEL_PREFIX}_s{seed}_a{a:.2f}_b{b:.2f}.npz"
+        f"eval_results_{config.MODEL_PREFIX}_s{seed}_a{a:.2f}_b{b:.2f}_arch:{architecture}_data:{DATA}_lookback:{lookback}.npz"
     )
     if not path.exists():
         return
@@ -213,9 +210,9 @@ def plot_equity_curves(eval_dir, out_dir, seed=None, a=None, b=None):
     for axis in axes[len(episodes):]:
         axis.axis("off")
 
-    figure.suptitle(f"Equity Curves (Seed {seed}, a={a:.2f}, b={b:.2f})")
+    figure.suptitle(f"Equity Curves ({architecture}, {DATA}, lookback={lookback}, seed={seed}, a={a:.2f}, b={b:.2f})")
     figure.tight_layout()
-    figure.savefig(out_dir / "equity_curves.png", dpi=150)
+    figure.savefig(out_dir / f"equity_curves_{path.stem.removeprefix('eval_results_')}.png", dpi=150)
     plt.close(figure)
 
 
@@ -226,38 +223,47 @@ def main():
     args = parser.parse_args()
     args.out.mkdir(parents=True, exist_ok=True)
 
-    agent_results, random_results = collect(args.dir)
-    seed_results = seed_level(agent_results)
+    for architecture in config.ARCHITECTURE:
+        for data_name in config.DATAFRAME:
+            for lookback in config.LOOKBACKS:
+                agent_results, random_results = collect(args.dir, architecture, data_name, lookback)
+                if agent_results.empty:
+                    continue
+                seed_results = seed_level(agent_results)
 
-    random_return = np.nan
-    if not random_results.empty:
-        random_return = random_results.groupby("seed")["ret"].mean().median()
+                random_return = np.nan
+                if not random_results.empty:
+                    random_return = random_results.groupby("seed")["ret"].mean().median()
 
-    summary = cell_summary(seed_results, random_return)
-    summary.to_csv(args.out / "summary.csv", index=False)
-    print(summary.round(2).to_string(index=False))
+                suffix = f"{config.MODEL_PREFIX}_arch:{architecture}_data:{data_name}_lookback:{lookback}"
+                summary = cell_summary(seed_results, random_return)
+                summary.to_csv(args.out / f"summary_{suffix}.csv", index=False)
 
-    heatmap(
-        summary,
-        metric="excess_med",
-        label=return_label,
-        title="Agent vs Buy & Hold (Median over seeds, 95% Bootstrap CI)",
-        colorbar_label="Median excess return vs hold (%)",
-        cmap="RdYlGn",
-        output_path=args.out / "heatmap_agent_return.png",
-        center=0.0,
-    )
-    heatmap(
-        summary,
-        metric="sortino",
-        label=risk_label,
-        title="Risk Metrics",
-        colorbar_label="Median Sortino",
-        cmap="YlGnBu",
-        output_path=args.out / "heatmap_risk.png",
-    )
-    plot_equity_curves(args.dir, args.out)
-
+                heatmap(
+                    summary,
+                    metric="excess_med",
+                    label=return_label,
+                    title=f"Agent vs Buy & Hold (Median over seeds) - {architecture} / {data_name} / lookback={lookback}",
+                    colorbar_label="Median excess return vs hold (%)",
+                    cmap="RdYlGn",
+                    output_path=args.out / f"heatmap_agent_return_{suffix}.png",
+                    center=0.0,
+                )
+                heatmap(
+                    summary,
+                    metric="sortino",
+                    label=risk_label,
+                    title=f"Risk Metrics - {architecture} / {data_name} / lookback={lookback}",
+                    colorbar_label="Median Sortino",
+                    cmap="YlGnBu",
+                    output_path=args.out / f"heatmap_risk_{suffix}.png",
+                )
+                for seed in config.SEEDS:
+                    for a, b in dict.fromkeys(config.TARGET_CONFIGS):
+                        plot_equity_curves(
+                            args.dir, args.out, architecture=architecture, DATA=data_name,
+                            lookback=lookback, seed=seed, a=a, b=b,
+                        )
 
 if __name__ == "__main__":
     main()

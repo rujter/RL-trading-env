@@ -9,21 +9,21 @@ TARGET_CONFIGS = [
     (0.50, 2.20),
     (1.25, 1.90),
 ]
-LOOKBACK = 100
+LOOKBACKS = [5, 100]
 ARCHITECTURE = [
     "def", "2dcnn", "gru"
 ]
 FIXED_LAMBDA = 0.0
 df1 = pd.read_csv("cache.txt", header=[0,1], skiprows=[2], index_col=0)
 
-DATAFRAME = [
-    df1
-]
+DATAFRAME = {
+    "df1": df1
+}
 
 
 TOTAL_TIMESTEPS = 1500_000
 CHECKPOINT_FREQ = 100_000  # Save every N training timesteps; 0 disables snapshots.
-MODEL_PREFIX = f"ppo{TOTAL_TIMESTEPS // 1000}kcnn"
+MODEL_PREFIX = f"{TOTAL_TIMESTEPS // 1000}k"
 
 N_EVAL_EPISODES = 50
 STARTING_CASH = 10_000.0

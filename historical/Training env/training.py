@@ -7,7 +7,7 @@ import pandas as pd
 from collections import deque
 import math
 from Classes import Portfolio, Stock, PPinpoint, Order, next_order_id, nextId
-from config import LOOKBACK
+from numbers import Integral
 
 
 SEED = 20
@@ -46,12 +46,13 @@ class Environment(gym.Env):
                  lam = 0.2, 
                  a = 0.5,
                  b = 2,
-                 lookback_window = LOOKBACK):
+                 lookback_window = 100):
 
         super().__init__()
         self.dataframe = dataframe
-        if lookback_window not in (100, 5):
-            raise ValueError("lookback_window must be 100 or 5")
+        if (isinstance(lookback_window, bool) or not isinstance(lookback_window, Integral)
+                or lookback_window <= 0):
+            raise ValueError("lookback_window must be a positive integer")
         self.lookback_window = int(lookback_window)
         self.gl_counter = 0
         self.history_steps = 0
@@ -159,6 +160,14 @@ class Environment(gym.Env):
         self.lossq = 0
         self.prevvolatility = 0
 
+        # Skip unavailable leading prices before counting the warmup bars.
+        while self.gl_counter < len(self.df):
+            price = self.df.iloc[self.gl_counter]
+            if np.isfinite(price) and price > 0:
+                break
+            self.gl_counter += 1
+        if len(self.df) - self.gl_counter < warmup_steps + 1:
+            raise ValueError(f"{self.ticker} needs {warmup_steps + 1} valid bars after its starting gap")
         for _ in range(warmup_steps):
             obs, _, _, _, _ = self.step(None)
 
@@ -178,6 +187,9 @@ class Environment(gym.Env):
             obs = self._get_obs()
             self.history_steps += 1
             return obs, 0.0, False, False, {"warmup": True}
+
+        if self.gl_counter >= len(self.df) - 1:
+            raise RuntimeError("Episode has ended; call reset() before step().")
 
         value_before = self._portfolio_value()
         dd_before = (self.peak - value_before) / self.peak
@@ -199,9 +211,7 @@ class Environment(gym.Env):
         minfee = 3
         fee_factor = 1 + transaction_fee
 
-        if self.gl_counter+1 <= 260:
-            priceref = self.df.iloc[self.gl_counter+1]
-        else: truncated = True
+        priceref = self.df.iloc[self.gl_counter + 1]
 
         num = min(1.0, abs(act))
         if order_action == "buy":
