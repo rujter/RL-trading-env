@@ -39,6 +39,7 @@ humanised some code.
 cnn deluje tako da najprej na 1. delnici naredi weights, pol ko gre na drugo jih pocasi spremnija, vsakic reset, normalised the obs space
 
 IMM TO DO:
+Execution timing: observe day t through its close, choose the action after that close, and execute at day t+1 open using the next session's Open price (not the previous Close). Mark portfolio equity at day t+1 close and align benchmark returns to the same dates. This is the market-order simulation convention; limit orders require a separate fill rule and must not execute at a price worse than their limit.
 naredi boljso dokumentacijo
 write article and show professors, if none reccomend magazines do medium, SSRN, github and reddit
 

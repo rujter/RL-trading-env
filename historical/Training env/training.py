@@ -207,7 +207,10 @@ class Environment(gym.Env):
         transaction_fee = 0.0035
         minfee = 3
         fee_factor = 1 + transaction_fee
-        priceref = self.df.iloc[self.gl_counter]
+
+        if self.gl_counter+1 <= 260:
+            priceref = self.df.iloc[self.gl_counter+1]
+        else: truncated = True
 
         num = min(1.0, abs(act))
         if order_action == "buy":
