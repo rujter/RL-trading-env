@@ -7,6 +7,8 @@ from stable_baselines3.common.utils import set_random_seed
 
 from training import Environment, tort
 from Classes import get_policy_kwargs
+
+#config file includes all setup variables
 import config as C
 
 MODELS_DIR = pathlib.Path("models")
@@ -18,6 +20,7 @@ def make_env(dataframe, lookback, a=0.0, b=0.0, lam=0.0):
     return Environment(dataframe=dataframe, id=1, startingcash=C.STARTING_CASH,
                        a=a, b=b, lam=lam, lookback_window=lookback)
 
+#function to evaluate a trained model
 def evaluate(agent, env, name, deterministic=True):
     prices, equity, shares, orders, ep_ids, tickers = [], [], [], [], [], []
 
@@ -43,6 +46,7 @@ def evaluate(agent, env, name, deterministic=True):
                       f"final_val=${val:,.0f} return={ret:6.1f}%")
                 break
 
+    #saves all data generated from run.py to a file afterwards used by analyse.py
     np.savez(
         EVAL_DIR / f"eval_results_{name}.npz",
         price=np.array(prices), equity=np.array(equity), shares=np.array(shares),
@@ -55,6 +59,7 @@ def evaluate(agent, env, name, deterministic=True):
 
 def main():
 
+    #for loops for diffrent training regiments
     for seed in C.SEEDS: #seeds
         for a, b in C.TARGET_CONFIGS: #sweep
             timesteps = C.TOTAL_TIMESTEPS #timesteps
@@ -67,12 +72,17 @@ def main():
                         env = make_env(DATA, lookback, a, b, C.FIXED_LAMBDA)
                         set_random_seed(seed)  # python + numpy + torch
 
+
+                        #select tort (training or testing) from the trainig.py file 
+                        #true == training the model, false == testing the model
                         if tort:
                             print(f"Training {name}")
                             agent = PPO("MlpPolicy", env, seed=seed, verbose=1, ent_coef=0.005,
                                         policy_kwargs=get_policy_kwargs(lookback, architecture),
                                         learning_rate=3e-4, device="cpu")
                             checkpoint_callback = None
+
+                            #determins the frequency of checkpoints 
                             if C.CHECKPOINT_FREQ > 0:
                                 checkpoint_callback = CheckpointCallback(
                                     save_freq=max(C.CHECKPOINT_FREQ // agent.n_envs, 1),

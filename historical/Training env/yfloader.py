@@ -19,7 +19,6 @@ tickers = [
 
 start_date = datetime(2024, 1, 1)
 end_date = datetime(2026, 1, 1)
-
 cache_file = f"cache_{start_date.year}-{end_date.year}.csv"
 
 

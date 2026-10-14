@@ -51,7 +51,7 @@ def beta_alpha(r_agent, r_bench, ppy):
     alpha_ann = (r_agent.mean() - beta * r_bench.mean()) * ppy
     return float(beta), float(alpha_ann * 100.0)
 
-
+#returns a list with all performance metrics
 def episode_metrics(equity, price, shares, orders, start_cash, ppy=252, cost_bps=0.0):
     equity = np.asarray(equity, dtype=float)
     price = np.asarray(price, dtype=float)
