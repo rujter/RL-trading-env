@@ -16,6 +16,7 @@ MODELS_DIR.mkdir(exist_ok=True)
 EVAL_DIR = pathlib.Path(C.EVAL_DIR)
 EVAL_DIR.mkdir(exist_ok=True)
 
+#DATAFRAME provides dataframe for this from config
 def make_env(dataframe, lookback, a=0.0, b=0.0, lam=0.0):
     return Environment(dataframe=dataframe, id=1, startingcash=C.STARTING_CASH,
                        a=a, b=b, lam=lam, lookback_window=lookback)

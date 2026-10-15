@@ -36,7 +36,7 @@ def download_and_clean_data(tickers, start, end):
     df = df.sort_index(axis=1)
     df = df.ffill()
     df = df.fillna(0.0)
-
+    return df
 
 if __name__ == "__main__":
     df_all = download_and_clean_data(tickers, start_date, end_date)

@@ -40,6 +40,7 @@ tort = False #if true its trainig, else testing
 class Environment(gym.Env):
 
     def __init__(self,
+                 #dataframe is inputted from run.py which gets it from config from DATAFRAME
                  dataframe,
                  startingcash = 5000,
                  id = 1,
@@ -69,6 +70,9 @@ class Environment(gym.Env):
         self.peak = self.startingcash
         self.ticker = tickers[0] if tort else test_tickers[0]
 
+        #CSV file has 2 headers meaning its like a 2d table;
+        #the first one, the first row is the close  or open
+        #the second one is the ticker
         self.df = self.dataframe["Close"][self.ticker]
         self.dfl = self.dataframe["Low"][self.ticker]
         self.dfh = self.dataframe["High"][self.ticker]
