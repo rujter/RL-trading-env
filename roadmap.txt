@@ -42,6 +42,16 @@ cnn deluje tako da najprej na 1. delnici naredi weights, pol ko gre na drugo jih
 14.10 fix lookahead bias tako da removal backfill ampak da warmup skippa tiste vlaue kjer je 0, dodal v name modela use stvari, popravu analsys za spremenjnjena imena, added some comments, added slippage
 dodal se vec commentov 
 
+15.10 RESEARCH PIVOT: uporabljanje ML supervised z lookback x architecutre to provide an estimate for the next few days, feeding it into rl agent 
+and the rl agent decides how to rebalance the portfolio. primerjava tega mogoce tudi z nekim deterministicnim optimiserjem
+
+ML: "A 0.2% expected return with 0.4% volatility"
+RL: "portfolio allocation"
+
+Do supervised three-day return and risk forecasts improve the out-of-sample performance and sample efficiency of an RL allocation policy?
+How do CNN versus GRU architectures and historical lookback affect forecast quality and downstream policy performance?
+Does the RL allocation policy improve on a simple cost-aware controller using the same forecasts?
+
 IMM TO DO:
 dodaj commente za analyse, use ostalo je
 naredi boljso dokumentacijo
@@ -380,7 +390,7 @@ naredi uni GAN al kaj je ze dodaj GBM, Jump diffusion in OU s tem da extractas v
 poglej five Kenneth Frenc
 uglavnem googlaj state representation reinforcement learning TO
 naredi meta rl ki ugotovi katerega bos runnal
-dodaj block bootstrapping
+dodaj block bootstrmetaapping
 naredi boljse trading bote - googlaj to Agent-Based Computational Finance poglej si downloadal dva cpatera useful
 naredi boljso dokumentacijo
 dodaj nesinhrono delovanje, to bo eno vecjih problemov, basically vec tradeov na step
