@@ -52,7 +52,24 @@ Do supervised three-day return and risk forecasts improve the out-of-sample perf
 How do CNN versus GRU architectures and historical lookback affect forecast quality and downstream policy performance?
 Does the RL allocation policy improve on a simple cost-aware controller using the same forecasts?
 
+https://victoropp.github.io/blog-post-4.html
+close close, log returns, derivative of returns (over multiple windows), second derivative, overnight move, high-low/close
+so like 
+aapl: time t: 20 day moving avg, 5 day moving av
+aapl time t+1: same
+aapl time t+2: same
+nvda: time t: 20 day moving ažvg, 5 day moving av
+nvda: time t+1: same
+nvda: time t+2: same
+naredis like pac gres cez delnic ein nevem prvih 
+
 IMM TO DO:
+nevem ce naj traininam na vec delnicah? lesser evil ig
+close/close. close/open (night), open close (day), range (how far they swung), ma dist (how below avg)
+basically lahko naredis zdej ko imas data trainas za vsak stock linear regression
+poglej si kaj rabis dodat v input od ML preberi kaj
+preberi se kateri method je najboljsi
+ugotoivi kako se parsa ta data iz yfloaderja
 dodaj commente za analyse, use ostalo je
 naredi boljso dokumentacijo
 
@@ -146,6 +163,7 @@ A Primer for the Mathematics of Financial Engineeringx¸
 http://lib.ysu.am/disciplines_bk/2b66030e0dd4c77b2bda437f6c1e5e66.pdf
 Advances in Financial Machine Learning by Marcos López de Prado (Essential for financial data splitting, backtesting pitfalls, and feature engineering).
 Machine Learning for Algorithmic Trading by Stefan Jansen (Has dedicated chapters on Gym environments and RL trading agents). DEFINITIVNO PREBERI TO OZ VSAJ SKIM IN NAJDI IDEJE
+https://raw.githubusercontent.com/englianhu/Coursera-Machine-Learning-for-Trading/8fdfbfdec4ffc277afe658dcbcd1846bea8b3e1c/reference/Machine%20Learning%20for%20Algorithmic%20Trading%20(2nd%20Edition).pdf
 
 NOTES
 intro notes:
