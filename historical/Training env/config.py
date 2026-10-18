@@ -22,7 +22,7 @@ ARCHITECTURE = [
 #coefficient for the drawdown penalty in the reward calculation in training.py
 FIXED_LAMBDA = 0.0
 
-df1 = pd.read_csv("cache.txt", header=[0,1], skiprows=[2], index_col=0)
+df1 = pd.read_csv("cache.csv", header=[0,1], skiprows=[2], index_col=0)
 DATAFRAME = {
     "df1": df1
 }
