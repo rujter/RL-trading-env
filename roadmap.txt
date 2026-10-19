@@ -41,9 +41,10 @@ cnn deluje tako da najprej na 1. delnici naredi weights, pol ko gre na drugo jih
 13.10 popravu malo kodo
 14.10 fix lookahead bias tako da removal backfill ampak da warmup skippa tiste vlaue kjer je 0, dodal v name modela use stvari, popravu analsys za spremenjnjena imena, added some comments, added slippage
 dodal se vec commentov 
-
 15.10 RESEARCH PIVOT: uporabljanje ML supervised z lookback x architecutre to provide an estimate for the next few days, feeding it into rl agent 
 and the rl agent decides how to rebalance the portfolio. primerjava tega mogoce tudi z nekim deterministicnim optimiserjem
+18.10 applied random forrest to classification of going up or down but its very shit
+19.10 added a ml cnn but its like one percent short of predicting the sign
 
 ML: "A 0.2% expected return with 0.4% volatility"
 RL: "portfolio allocation"
@@ -53,25 +54,9 @@ How do CNN versus GRU architectures and historical lookback affect forecast qual
 Does the RL allocation policy improve on a simple cost-aware controller using the same forecasts?
 
 https://victoropp.github.io/blog-post-4.html
-close close, log returns, derivative of returns (over multiple windows), second derivative, overnight move, high-low/close
-so like 
-aapl: time t: 20 day moving avg, 5 day moving av
-aapl time t+1: same
-aapl time t+2: same
-nvda: time t: 20 day moving ažvg, 5 day moving av
-nvda: time t+1: same
-nvda: time t+2: same
-naredis like pac gres cez delnic ein nevem prvih 
 
 IMM TO DO:
-nevem ce naj traininam na vec delnicah? lesser evil ig
-close/close. close/open (night), open close (day), range (how far they swung), ma dist (how below avg)
-basically lahko naredis zdej ko imas data trainas za vsak stock linear regression
-poglej si kaj rabis dodat v input od ML preberi kaj
-preberi se kateri method je najboljsi
-ugotoivi kako se parsa ta data iz yfloaderja
-dodaj commente za analyse, use ostalo je
-naredi boljso dokumentacijo
+volatility ML
 
 What Matters for a Reinforcement Learning Stock Trader? An Ablation of Architecture, Observation Window and Reward
 HIPOTEZE:

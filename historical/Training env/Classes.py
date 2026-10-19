@@ -51,6 +51,8 @@ class Order:
 
 ############################################CNN FOR PPO/SAC ######################################ž
 
+#convolutional network passes its features and using the stablebaselines3 it trains using gradient descent
+#classical cnns learn using fit 
 class CustomCNN(BaseFeaturesExtractor):
 
   def __init__(
