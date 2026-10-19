@@ -43,46 +43,16 @@ cnn deluje tako da najprej na 1. delnici naredi weights, pol ko gre na drugo jih
 dodal se vec commentov 
 15.10 RESEARCH PIVOT: uporabljanje ML supervised z lookback x architecutre to provide an estimate for the next few days, feeding it into rl agent 
 and the rl agent decides how to rebalance the portfolio. primerjava tega mogoce tudi z nekim deterministicnim optimiserjem
-18.10 applied random forrest to classification of going up or down but its very shit
-19.10 added a ml cnn but its like one percent short of predicting the sign
+16.10 tinkered with machine learning a bit uskin sklearn 
+17.10 dodal conv
 
-ML: "A 0.2% expected return with 0.4% volatility"
-RL: "portfolio allocation"
 
 Do supervised three-day return and risk forecasts improve the out-of-sample performance and sample efficiency of an RL allocation policy?
 How do CNN versus GRU architectures and historical lookback affect forecast quality and downstream policy performance?
 Does the RL allocation policy improve on a simple cost-aware controller using the same forecasts?
 
-https://victoropp.github.io/blog-post-4.html
-
 IMM TO DO:
-volatility ML
-
-What Matters for a Reinforcement Learning Stock Trader? An Ablation of Architecture, Observation Window and Reward
-HIPOTEZE:
-higher value of a (outperforming the market) makes the agent more risk aware (lower sortino) but at the same time also less profitable as opposed to b (general profit)
-agent with a 2d cnn will significantly outperform the bare agent, the gru one will come in second
-agents that trained on more steps will significantly outperform those that
-the observation space of 5 will perform worse than 20
-
-5 seeds each
-REWARD 2X2 cell vedno ugotovi kateri so pametni da runnam w selected a and b sweeps (1a, 1.5b middle, with 0.3a and 0.5b)
-1m steps each with snapshots in time
-ARCHITECTURE: BARE, 1D CNN, GRU
-LOOKBACK WINDOW: 5, 100
-
-100 delnic, 10 sektorjev (70 training, 30 testing)
-bodi pozoren na survivorship bias
-1	2008-2018	2019-2020	COVID crash and rebound
-2	2008-2020	2021-2022	Rate-shock bear market
-3	2008-2025	2026		Untouched, plus paper trading
-
-Metrics: raw return vs buy and hold, max drawdown, sortino, sharpe, calmar, omega, alpha, beta
-
-CPU:
-PPO: 86k steps per min, 500K run je 350sec
-add a small lambda experiment to show why i set it at 0
-5 x 2 x 2 x 3 x 2 x 3 = 35ur (500K steps each) 
+https://github.com/saiemula/Market-Regime-Detection-System
 
 RESOURCES
 intro:
