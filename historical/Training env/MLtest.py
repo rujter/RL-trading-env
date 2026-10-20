@@ -98,13 +98,17 @@ for ticker in tickers:
     low = deque(maxlen=20)
     open_prices = deque(maxlen=20)
     volume = deque(maxlen=20)
+    returns = deque(maxlen=20)
 
+    #na zacetku gre samo za 20 naprej in napolne arraye
     for i in range(20):
         close.append(float(df["Close"].iloc[i]))
         high.append(float(df["High"].iloc[i]))
         low.append(float(df["Low"].iloc[i]))
         open_prices.append(float(df["Open"].iloc[i]))
         volume.append(float(df["Volume"].iloc[i]))
+        if (i == 0): continue
+        else: returns.append(close[i]-close[i-1])
 
 
     split_index = int(len(df) * 0.8)
@@ -127,6 +131,7 @@ for ticker in tickers:
         roc10 = close[-1] / close[-11] - 1 #rate of change
         roc20 = close[-1] / close[-20] - 1
 
+
         inside = np.array([
 
             ######TREND
@@ -142,6 +147,10 @@ for ticker in tickers:
             roc10,
             roc20,
             #VOLATILITY
+            np.std(returns), #volatility over 20 day period
+            np.std(returns[15:]) #volatility over the last 5 days
+            tr = max(high[-1] - low[-1],abs(high[-1] - close[-2]),abs(low[-1] - close[-2])) #max rolling change per day
+
         ], dtype=float)
 
 
