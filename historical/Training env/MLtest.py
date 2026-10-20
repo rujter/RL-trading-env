@@ -59,6 +59,32 @@ x_sequence = []
 y = []
 train_flags = []
 
+def ema_last(x, span):
+    x = np.asarray(x, dtype=float)
+    alpha = 2 / (span + 1)
+    ema = x[0]
+    for v in x[1:]:
+        ema = alpha * v + (1 - alpha) * ema
+    return ema
+
+def rsi_last(close, period=14):
+    close = np.asarray(close, dtype=float)
+    deltas = np.diff(close)                 # day-to-day price changes
+    gains = np.where(deltas > 0, deltas, 0.0)
+    losses = np.where(deltas < 0, -deltas, 0.0)
+
+    # Wilder's smoothing: start with simple averages, then update recursively
+    avg_gain = gains[:period].mean()
+    avg_loss = losses[:period].mean()
+    for g, l in zip(gains[period:], losses[period:]):
+        avg_gain = (avg_gain * (period - 1) + g) / period
+        avg_loss = (avg_loss * (period - 1) + l) / period
+
+    if avg_loss == 0:
+        return 100.0 if avg_gain > 0 else 50.0
+    rs = avg_gain / avg_loss
+    return 100 - 100 / (1 + rs)
+
 # Build examples for every ticker. Each example must contain scalar values.
 tickers = df_all.columns.get_level_values("Ticker").unique()
 for ticker in tickers:
@@ -83,27 +109,39 @@ for ticker in tickers:
 
     split_index = int(len(df) * 0.8)
 
-    for i in range(20, len(df)):
-        d1ret = close[-1] / close[-2] - 1
+    for i in range(20, len(df)): #od [20-260 tipo dela to]
+        #TREND#
         d5ret = close[-1] / close[-6] - 1
         d20ret = close[-1] / close[0] - 1
-
-        previous_d1ret = close[-2] / close[-3] - 1
-        d2ret = d1ret - previous_d1ret
-
-        overnight = open_prices[-1] / close[-2] - 1
         intraday = close[-1] / open_prices[-1] - 1
-        spread = (high[-1] - low[-1]) / close[-1]
         volume_change = volume[-1] / volume[-2] - 1
+        t = np.arange(len(close))         #linear regression of previous few pointS
+        slope = np.polyfit(t, np.log(close), 1)[0]      #daily log return
+
+        #MOMENTUM
+        fast = ema_last(close, 5)         #exponential moving average, biases the recent trends
+        slow = ema_last(close, 20)
+        ema_spread = fast / slow - 1
+        rsi = rsi_last(close, 14) / 100 - 0.5 
+        MACD = fast-slow #moving avg convergence divergence how far the short-term trend is from the long-term trend
+        roc10 = close[-1] / close[-11] - 1 #rate of change
+        roc20 = close[-1] / close[-20] - 1
 
         inside = np.array([
-            d1ret,
+
+            ######TREND
             d5ret,
             d20ret,
-            d2ret,
-            overnight,
-            intraday,
-            spread,
+            intraday, #last day intra day
+            ema_spread, #exponential slope, biasing the last few points
+            slope, #linear regression slope   
+
+            ##MOMENTUUM
+            rsi,  #rsi, moving on avg upo or down
+            MACD, 
+            roc10,
+            roc20,
+            #VOLATILITY
         ], dtype=float)
 
 
@@ -266,4 +304,4 @@ def conv():
 
     print("Test accuracy: %.2f%%" % (100 * correct / total))
 
-
+forrest()
