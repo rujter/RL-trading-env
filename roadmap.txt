@@ -45,15 +45,14 @@ dodal se vec commentov
 and the rl agent decides how to rebalance the portfolio. primerjava tega mogoce tudi z nekim deterministicnim optimiserjem
 16.10 tinkered with machine learning a bit uskin sklearn 
 17.10 dodal conv
+17-22.10 added garch prediction model besides random forrest classifiers
 
-
-Do supervised three-day return and risk forecasts improve the out-of-sample performance and sample efficiency of an RL allocation policy?
-How do CNN versus GRU architectures and historical lookback affect forecast quality and downstream policy performance?
 Does the RL allocation policy improve on a simple cost-aware controller using the same forecasts?
+Do supervised learning forecasts improve the out-of-sample performance and sample efficiency of an RL allocation policy? (with simple RL metrics, then adding supervised learning)
+How do CNN versus GRU architectures and historical lookback affect forecast quality and downstream policy performance?
 
 IMM TO DO:
-dodaj volatility ml predictor, za zdej je sign shit
-tweakaj malo random tree za MLtest
+add the first point to training
 https://github.com/saiemula/Market-Regime-Detection-System
 
 RESOURCES
