@@ -52,7 +52,8 @@ How do CNN versus GRU architectures and historical lookback affect forecast qual
 Does the RL allocation policy improve on a simple cost-aware controller using the same forecasts?
 
 IMM TO DO:
-sqeueunce zame je zacnje 20 dni, to je treba normalizirat
+dodaj volatility ml predictor, za zdej je sign shit
+tweakaj malo random tree za MLtest
 https://github.com/saiemula/Market-Regime-Detection-System
 
 RESOURCES
