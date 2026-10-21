@@ -85,8 +85,97 @@ def rsi_last(close, period=14):
     rs = avg_gain / avg_loss
     return 100 - 100 / (1 + rs)
 
+def prepare_forest_features(close, high, low, open_prices, volume, returns, obv):
+    #TREND#
+    d1ret = close[-1] / close[-2] -1 #last days difference in price
+    d5ret = close[-1] / close[-6] - 1 #the difference in price in the last 0 days
+    d20ret = close[-1] / close[0] - 1 #the difference in the price in the last 20 days
+    intraday = close[-1] / open_prices[-1] - 1 #intra day return last day
+    volume_change = volume[-1] / volume[-2] - 1
+    t = np.arange(len(close))         #linear regression of previous few pointS
+    slope = np.polyfit(t, np.log(close), 1)[0]      #daily log return
+
+    #MOMENTUM
+    fast = ema_last(close, 5)         #exponential moving average, biases the recent trends
+    slow = ema_last(close, 20) 
+    ema_spread = fast / slow - 1
+    rsi = rsi_last(close, 14) / 100 - 0.5 
+    MACD = fast-slow #moving avg convergence divergence how far the short-term trend is from the long-term trend
+    roc10 = close[-1] / close[-11] - 1 #rate of change in last 
+    roc20 = close[-1] / close[-20] - 1
+    
+
+    twentydayvol = np.std(returns) #volatility over 20 day period
+    fivedayvol = np.std(np.asarray(returns)[-5:]) 
+
+    # OBV is accumulated when each daily observation enters the window.
+    volume_std = np.std(volume)
+    volz = (volume[-1] - np.mean(volume)) / volume_std if volume_std > 0 else 0.0
+
+
+    inside = np.array([
+
+        ######TREND
+        d1ret,
+        d5ret,
+        d20ret,
+        intraday, #last day intra day
+        ema_spread, #exponential slope, biasing the last few points
+        slope, #linear regression slope   
+
+        ##MOMENTUUM
+        rsi,  #rsi, moving on avg upo or down
+        MACD, 
+        roc10,
+        roc20,
+
+        #VOLATILITY
+        twentydayvol,
+        fivedayvol,
+        max(high[-1] - low[-1],abs(high[-1] - close[-2]),abs(low[-1] - close[-2])), #max rolling change per day (tr)
+
+        #VOLUME
+        obv, #major market moving depends on the volume
+        volz, #how unusual the trading volume is compared to the recent volume
+
+
+    ], dtype=float)
+    return inside, obv
+
+def prepare_cnn_sequence(close, high, low, open_prices, volume):
+    #CNNN DATA PREPARATION##########################################
+    closes = np.asarray(close, dtype=np.float32) #making arrays
+    highs = np.asarray(high, dtype=np.float32)
+    lows = np.asarray(low, dtype=np.float32)
+    opens = np.asarray(open_prices, dtype=np.float32)
+    volumes = np.asarray(volume, dtype=np.float32)
+
+    close_returns = np.zeros(20, dtype=np.float32)
+    close_returns[1:] = closes[1:] / closes[:-1] - 1
+
+    overnight_returns = np.zeros(20, dtype=np.float32)
+    overnight_returns[1:] = opens[1:] / closes[:-1] - 1
+
+    intraday_returns = closes / opens - 1
+    spreads = (highs - lows) / closes
+
+    volume_changes = np.zeros(20, dtype=np.float32)
+    volume_changes[1:] = np.log(
+        (volumes[1:] + 1) / (volumes[:-1] + 1)
+    )
+
+    return np.stack([
+        close_returns,
+        overnight_returns,
+        intraday_returns,
+        spreads,
+        volume_changes,
+    ])
+
+
 # Build examples for every ticker. Each example must contain scalar values.
 tickers = df_all.columns.get_level_values("Ticker").unique()
+
 for ticker in tickers:
     df = df_all.xs(ticker, axis=1, level="Ticker").dropna() #remove na colums
 
@@ -99,6 +188,7 @@ for ticker in tickers:
     open_prices = deque(maxlen=20)
     volume = deque(maxlen=20)
     returns = deque(maxlen=20)
+    obv = 0.0
 
     #na zacetku gre samo za 20 naprej in napolne arraye
     for i in range(20):
@@ -108,121 +198,91 @@ for ticker in tickers:
         open_prices.append(float(df["Open"].iloc[i]))
         volume.append(float(df["Volume"].iloc[i]))
         if (i == 0): continue
-        else: returns.append(close[i]-close[i-1])
+        else:
+            returns.append(close[i] / close[i - 1] - 1)
+
+        if (i == 0): continue
+        else: 
+            if (close[i] > close[i-1]): obv+= volume[i]
+            elif (close[i] == close[i-1]): obv += 0
+            else: obv -= volume[i]
 
 
     split_index = int(len(df) * 0.8)
 
     for i in range(20, len(df)): #od [20-260 tipo dela to]
-        #TREND#
-        d5ret = close[-1] / close[-6] - 1
-        d20ret = close[-1] / close[0] - 1
-        intraday = close[-1] / open_prices[-1] - 1
-        volume_change = volume[-1] / volume[-2] - 1
-        t = np.arange(len(close))         #linear regression of previous few pointS
-        slope = np.polyfit(t, np.log(close), 1)[0]      #daily log return
-
-        #MOMENTUM
-        fast = ema_last(close, 5)         #exponential moving average, biases the recent trends
-        slow = ema_last(close, 20)
-        ema_spread = fast / slow - 1
-        rsi = rsi_last(close, 14) / 100 - 0.5 
-        MACD = fast-slow #moving avg convergence divergence how far the short-term trend is from the long-term trend
-        roc10 = close[-1] / close[-11] - 1 #rate of change
-        roc20 = close[-1] / close[-20] - 1
+        inside, obv = prepare_forest_features(close, high, low, open_prices, volume, returns, obv)
+        sequence = prepare_cnn_sequence(close, high, low, open_prices, volume)
 
 
-        inside = np.array([
-
-            ######TREND
-            d5ret,
-            d20ret,
-            intraday, #last day intra day
-            ema_spread, #exponential slope, biasing the last few points
-            slope, #linear regression slope   
-
-            ##MOMENTUUM
-            rsi,  #rsi, moving on avg upo or down
-            MACD, 
-            roc10,
-            roc20,
-            
-            #VOLATILITY
-            np.std(returns), #volatility over 20 day period
-            np.std(returns[15:]) #volatility over the last 5 days
-            tr = max(high[-1] - low[-1],abs(high[-1] - close[-2]),abs(low[-1] - close[-2])) #max rolling change per day
-
-        ], dtype=float)
-
-
-        #CNNN DATA PREPARATION##########################################
-        closes = np.asarray(close, dtype=np.float32) #making arrays
-        highs = np.asarray(high, dtype=np.float32)
-        lows = np.asarray(low, dtype=np.float32)
-        opens = np.asarray(open_prices, dtype=np.float32)
-        volumes = np.asarray(volume, dtype=np.float32)
-
-        close_returns = np.zeros(20, dtype=np.float32)
-        close_returns[1:] = closes[1:] / closes[:-1] - 1
-
-        overnight_returns = np.zeros(20, dtype=np.float32)
-        overnight_returns[1:] = opens[1:] / closes[:-1] - 1
-
-        intraday_returns = closes / opens - 1
-        spreads = (highs - lows) / closes
-
-        volume_changes = np.zeros(20, dtype=np.float32)
-        volume_changes[1:] = np.log(
-            (volumes[1:] + 1) / (volumes[:-1] + 1)
-        )
-
-        sequence = np.stack([
-            close_returns,
-            overnight_returns,
-            intraday_returns,
-            spreads,
-            volume_changes,
-        ])
+        x.append(inside) #sequence for the random forrest
+        x_sequence.append(sequence) #sequence for the cnn
 
         current_close = float(df["Close"].iloc[i])
 
-        x.append(inside)
-        x_sequence.append(sequence)
-        y.append(int(current_close > close[-1]))
-        train_flags.append(i < split_index)
+        y.append(int(current_close > close[-1])) #closing prices for both
 
+        #updated the metrics
+        train_flags.append(i < split_index)
+        returns.append(current_close / close[-1] - 1)
+        if current_close > close[-1]:
+            obv += float(df["Volume"].iloc[i])
+        elif current_close < close[-1]:
+            obv -= float(df["Volume"].iloc[i])
         close.append(current_close)
         high.append(float(df["High"].iloc[i]))
         low.append(float(df["Low"].iloc[i]))
         open_prices.append(float(df["Open"].iloc[i]))
         volume.append(float(df["Volume"].iloc[i]))
 
-x = np.asarray(x)
-x_sequence = np.asarray(x_sequence, dtype=np.float32)
-y = np.asarray(y)
+#setting up the arrays for testing and training
+x = np.asarray(x) #forrest
+x_sequence = np.asarray(x_sequence, dtype=np.float32) #conv
+
+y = np.asarray(y) #both
 train_flags = np.asarray(train_flags)
 
 # Chronological 80/20 split within every ticker.
+#for the random fofrrest
 x_train = x[train_flags]
 x_test = x[~train_flags]
+x_train = scaler.fit_transform(x_train)
+x_test = scaler.transform(x_test) 
+
+#for the conv
 x_sequence_train = x_sequence[train_flags]
 x_sequence_test = x_sequence[~train_flags]
+
+#for both
 y_train = y[train_flags]
 y_test = y[~train_flags] #reverse boolean
-x_train = scaler.fit_transform(x_train)
-x_test = scaler.transform(x_test)
 
 #random forrest#######################################################
 def forrest():
 
-    clf = RandomForestClassifier(n_estimators=100)
+    clf = RandomForestClassifier(
+    n_estimators=300,
+    max_depth=5,
+    min_samples_leaf=50,
+    random_state=42,
+    n_jobs=-1,
+    )
     clf.fit(x_train, y_train)
+    train_accuracy = accuracy_score(y_train, clf.predict(x_train))
     y_pred = clf.predict(x_test)
     accuracy = accuracy_score(y_test, y_pred)
 
-    print(f"Accuracy: {accuracy * 100:.2f}%")
-    print("Percentage of up days:", y_test.mean())
-    print("Predicted up percentage:", y_pred.mean())
+    # Choose the constant prediction using training labels only.
+    majority_label = int(y_train.mean() > 0.5)
+    baseline = accuracy_score(y_test, np.full_like(y_test, majority_label))
+    print(f"Training Accuracy: {train_accuracy * 100:.2f}%")
+    print(f"Testing Accuracy: {accuracy * 100:.2f}%") #accuracy of getting the prediction right on a certain day
+    print(f"Training-majority baseline ({'up' if majority_label else 'not up'}): {baseline * 100:.2f}%")
+    print(f"Always-up baseline: {y_test.mean() * 100:.2f}%")
+    print(f"Difference from training-majority baseline: {(accuracy - baseline) * 100:+.2f} percentage points")
+    print(f"Train/test examples: {len(y_train)}/{len(y_test)}")
+    print("Percentage of up days:", y_test.mean())  #percentage of all up days in the dataset
+    print("Predicted up percentage:", y_pred.mean()) #the percentage the model predictef
 
 #CNNN #####################################################################
 #CONVOLUTIONAL NETWORK
@@ -274,7 +334,7 @@ def conv():
     optimizer = optim.Adam(net.parameters(), lr=0.004)
 
     #trinainfg the cnn
-    for epoch in range(20):
+    for epoch in range(1):
         net.train()
         correct = 0
         total = 0
