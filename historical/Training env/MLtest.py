@@ -146,6 +146,7 @@ for ticker in tickers:
             MACD, 
             roc10,
             roc20,
+            
             #VOLATILITY
             np.std(returns), #volatility over 20 day period
             np.std(returns[15:]) #volatility over the last 5 days
