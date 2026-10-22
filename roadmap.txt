@@ -47,11 +47,12 @@ and the rl agent decides how to rebalance the portfolio. primerjava tega mogoce 
 17.10 dodal conv
 17-22.10 added garch prediction model besides random forrest classifiers
 
-Does the RL allocation policy improve on a simple cost-aware controller using the same forecasts?
+Does the RL allocation policy improve on a simple cost-aware controller using the same forecasts? (RL forecaster vs controller using ML)
 Do supervised learning forecasts improve the out-of-sample performance and sample efficiency of an RL allocation policy? (with simple RL metrics, then adding supervised learning)
 How do CNN versus GRU architectures and historical lookback affect forecast quality and downstream policy performance?
 
 IMM TO DO:
+dodaj morr (machine learning or reainforcement learning) ki odloci katere odlocitve bodo act v steppu
 https://github.com/saiemula/Market-Regime-Detection-System
 
 RESOURCES
