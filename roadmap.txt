@@ -52,7 +52,6 @@ Do supervised learning forecasts improve the out-of-sample performance and sampl
 How do CNN versus GRU architectures and historical lookback affect forecast quality and downstream policy performance?
 
 IMM TO DO:
-add the first point to training
 https://github.com/saiemula/Market-Regime-Detection-System
 
 RESOURCES

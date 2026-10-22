@@ -36,7 +36,10 @@ za vsako
 '''
 import yfinance as yf
 from datetime import datetime
+import joblib
+from pathlib import Path
 
+Path("MLmodels").mkdir(exist_ok=True)
 #STARTING UP THE GARCH PREDICTION MODELS
 tickers = [
     #training tickers
@@ -154,33 +157,7 @@ def prepare_forest_features(close, high, low, open_prices, volume, returns, obv)
     volz = (volume[-1] - np.mean(volume)) / volume_std if volume_std > 0 else 0.0
 
 
-    inside = np.array([
 
-        ######TREND
-        d1ret,
-        d5ret,
-        d20ret,
-        intraday, #last day intra day
-        ema_spread, #exponential slope, biasing the last few points
-        slope, #linear regression slope   
-
-        ##MOMENTUUM
-        rsi,  #rsi, moving on avg upo or down
-        MACD, 
-        roc10,
-        roc20,
-
-        #VOLATILITY
-        twentydayvol,
-        fivedayvol,
-        max(high[-1] - low[-1],abs(high[-1] - close[-2]),abs(low[-1] - close[-2])), #max rolling change per day (tr)
-
-        #VOLUME
-        obv, #major market moving depends on the volume
-        volz, #how unusual the trading volume is compared to the recent volume
-
-
-    ], dtype=float)
     return inside, obv
 
 def prepare_vol(close, high, low, open_prices, volume, returns, obv):
@@ -207,7 +184,7 @@ def prepare_vol(close, high, low, open_prices, volume, returns, obv):
     forecast = result.forecast(horizon=1, reindex=False)
     garch_vol = float(np.sqrt(forecast.variance.iloc[-1, 0]) / 100)
 
-    '''
+    
     inside = np.array([
         ##MOMENTUUM
         rsi,  #rsi, moving on avg upo or down
@@ -229,7 +206,7 @@ def prepare_vol(close, high, low, open_prices, volume, returns, obv):
         volz, #how unusual the trading volume is compared to the recent volume
 
     ], dtype=float)
-    '''
+    
 
     return inside, obv
 
@@ -297,7 +274,11 @@ for ticker in tickers:
     garch_predictions[ticker] = volatility
     if len(df) < 21:
         continue
+    
+    model_path = Path(__file__).resolve().parent / "models" / "garch_models.joblib"
+    model_path.parent.mkdir(parents=True, exist_ok=True)
 
+    joblib.dump(garch_models, model_path)
         #MAKING THE LAST 20 DAY ARRAYS
     close = deque(maxlen=20)
     high = deque(maxlen=20)
@@ -399,6 +380,10 @@ def forrest():
     n_jobs=-1,
     )
     clf.fit(x_train, y_train)
+    joblib.dump(
+    {"BBmodel": clf, "BBscaler": scaler},
+    "models/random_forest.joblib",
+    )
     train_accuracy = accuracy_score(y_train, clf.predict(x_train))
     y_pred = clf.predict(x_test)
     accuracy = accuracy_score(y_test, y_pred)
@@ -515,6 +500,10 @@ def forrestvol():
     )
 
     clf.fit(x_vol_train, y_train_vol)
+    joblib.dump(
+        {"VOLmodel": clf, "VOLscaler": scaler},
+        "models/random_forest.joblib",
+    )
     train_pred = clf.predict(x_vol_train)
     y_pred = clf.predict(x_vol_test)
 
@@ -536,3 +525,4 @@ def forrestvol():
     return clf
 
 model = forrestvol()
+model = forrest()
