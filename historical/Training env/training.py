@@ -8,7 +8,17 @@ from collections import deque
 import math
 from Classes import Portfolio, Stock, PPinpoint, Order, next_order_id, nextId
 from numbers import Integral
+import joblib
+from pathlib import Path
 
+model_path = Path(__file__).resolve().parent / "models" / "garch_models.joblib"
+garch_models = joblib.load(model_path)
+
+saved = joblib.load("models/random_forest.joblib")
+clf = saved["BBmodel"]
+scaler = saved["BBscaler"]
+clf2 = saved["BBmodel"]
+scaler2 = saved["BBscaler"]
 
 SEED = 20
 random.seed(SEED)
@@ -33,9 +43,33 @@ test_tickers = [
     "LIN", "NEM", "DIA", "XLK",
 ]
 
-
 tort = False #if true its trainig, else testing
 
+def ema_last(x, span):
+    x = np.asarray(x, dtype=float)
+    alpha = 2 / (span + 1)
+    ema = x[0]
+    for v in x[1:]:
+        ema = alpha * v + (1 - alpha) * ema
+    return ema
+
+def rsi_last(close, period=14):
+    close = np.asarray(close, dtype=float)
+    deltas = np.diff(close)                 # day-to-day price changes
+    gains = np.where(deltas > 0, deltas, 0.0)
+    losses = np.where(deltas < 0, -deltas, 0.0)
+
+    # Wilder's smoothing: start with simple averages, then update recursively
+    avg_gain = gains[:period].mean()
+    avg_loss = losses[:period].mean()
+    for g, l in zip(gains[period:], losses[period:]):
+        avg_gain = (avg_gain * (period - 1) + g) / period
+        avg_loss = (avg_loss * (period - 1) + l) / period
+
+    if avg_loss == 0:
+        return 100.0 if avg_gain > 0 else 50.0
+    rs = avg_gain / avg_loss
+    return 100 - 100 / (1 + rs)
 
 class Environment(gym.Env):
 
@@ -47,7 +81,7 @@ class Environment(gym.Env):
                  lam = 0.2, 
                  a = 0.5,
                  b = 2,
-                 lookback_window = 100):
+                 lookback_window = 20): #lookback window doloci maxlen arraya
 
         super().__init__()
         self.dataframe = dataframe
@@ -76,6 +110,11 @@ class Environment(gym.Env):
         self.df = self.dataframe["Close"][self.ticker]
         self.dfl = self.dataframe["Low"][self.ticker]
         self.dfh = self.dataframe["High"][self.ticker]
+        self.dfo = self.dataframe["Open"][self.ticker]
+        self.dfv = self.dataframe["Volume"][self.ticker]
+        self.returns = self.df.pct_change()
+        
+        self.obv = 0
 
         portfolios[self.id] = Portfolio(id = self.id, cash = startingcash, holdings={})
         self.portfolio = portfolios[self.id]
@@ -91,11 +130,126 @@ class Environment(gym.Env):
         self.action_space = spaces.Box(-1, 1, (1,), dtype=np.float32)
         self.epsilon_prev = 0
 
+    def prepare_vol_array(self, close, high, low, open, volume, returns): 
+
+        #MOMENTUM
+        fast = ema_last(close, 5)         #exponential moving average, biases the recent trends
+        slow = ema_last(close, 20) 
+        ema_spread = fast / slow - 1
+        rsi = rsi_last(close, 14) / 100 - 0.5 
+        MACD = fast-slow #moving avg convergence divergence how far the short-term trend is from the long-term trend
+        roc10 = close[-1] / close[-11] - 1 #rate of change in last 
+        roc20 = close[-1] / close[-20] - 1
+        
+
+        twentydayvol = np.std(returns) #volatility over 20 day period
+        fivedayvol = np.std(np.asarray(returns)[-5:]) 
+
+        # OBV is accumulated when each daily observation enters the window.
+        volume_std = np.std(volume)
+        volz = (volume[-1] - np.mean(volume)) / volume_std if volume_std > 0 else 0.0
+
+
+        result = garch_models.get(self.ticker)
+
+        if result is None:
+            raise ValueError(f"No saved GARCH model for {self.ticker}")
+
+        forecast = result.forecast(horizon=1, reindex=False)
+        garch_vol = np.sqrt(forecast.variance.iloc[-1, 0]) / 100
+
+        #FOR THE VOLATILITY
+        inside2 = np.array([
+            ##MOMENTUUM
+            rsi,  #rsi, moving on avg upo or down
+            MACD, 
+            roc10,
+            roc20,
+
+            garch_vol,
+
+            #VOLATILITY
+            twentydayvol,
+            fivedayvol,
+            max(high[-1] - low[-1],abs(high[-1] - close[-2]),abs(low[-1] - close[-2])), #max rolling change per day (tr)
+
+            #VOLUME
+            self.obv, #major market moving depends on the volume
+            volz, #how unusual the trading volume is compared to the recent volume
+        ], dtype=float)
+
+    def prepare_BB_array(self, close, high, low, open, volume, returns):
+        #TREND#
+        d1ret = close[-1] / close[-2] -1 #last days difference in price
+        d5ret = close[-1] / close[-6] - 1 #the difference in price in the last 0 days
+        d20ret = close[-1] / close[0] - 1 #the difference in the price in the last 20 days
+        intraday = close[-1] / open[-1] - 1 #intra day return last day
+        volume_change = volume[-1] / volume[-2] - 1
+        t = np.arange(len(close))         #linear regression of previous few pointS
+        slope = np.polyfit(t, np.log(close), 1)[0]      #daily log return
+
+        #MOMENTUM
+        fast = ema_last(close, 5)         #exponential moving average, biases the recent trends
+        slow = ema_last(close, 20) 
+        ema_spread = fast / slow - 1
+        rsi = rsi_last(close, 14) / 100 - 0.5 
+        MACD = fast-slow #moving avg convergence divergence how far the short-term trend is from the long-term trend
+        roc10 = close[-1] / close[-11] - 1 #rate of change in last 
+        roc20 = close[-1] / close[-20] - 1
+        
+
+        twentydayvol = np.std(returns) #volatility over 20 day period
+        fivedayvol = np.std(np.asarray(returns)[-5:]) 
+
+        # OBV is accumulated when each daily observation enters the window.
+        volume_std = np.std(volume)
+        volz = (volume[-1] - np.mean(volume)) / volume_std if volume_std > 0 else 0.0
+
+
+        result = garch_models.get(self.ticker)
+
+        if result is None:
+            raise ValueError(f"No saved GARCH model for {self.ticker}")
+
+        forecast = result.forecast(horizon=1, reindex=False)
+        garch_vol = np.sqrt(forecast.variance.iloc[-1, 0]) / 100
+
+
+        #FOR THE BB
+        inside = np.array([
+            ######TREND
+            d1ret,
+            d5ret,
+            d20ret,
+            intraday, #last day intra day
+            ema_spread, #exponential slope, biasing the last few points
+            slope, #linear regression slope   
+
+            ##MOMENTUUM
+            rsi,  #rsi, moving on avg upo or down
+            MACD, 
+            roc10,
+            roc20,
+
+            #VOLATILITY
+            twentydayvol,
+            fivedayvol,
+            max(high[-1] - low[-1],abs(high[-1] - close[-2]),abs(low[-1] - close[-2])), #max rolling change per day (tr)
+
+            #VOLUME
+            self.obv, #major market moving depends on the volume
+            volz, #how unusual the trading volume is compared to the recent volume
+        ], dtype=float)
+
     def _get_obs(self):
         
         close = self.df
         high = self.dfh
         low = self.dfl
+        open = self.dfo
+        volume = self.dfv
+        returns = self.returns
+
         i = min(self.gl_counter, len(self.df) - 1)
 
         #adding current price to pricesarray
@@ -119,7 +273,24 @@ class Environment(gym.Env):
         volatility =  math.sqrt(0.00001+  0.07 * self.epsilon_prev**2 + 0.90 * self.prevvolatility**2)
         self.prevvolatility = volatility
         self.volarray.append(np.tanh(volatility / VOLATILITY_SCALE))
+        
+        #THIS IS TO PREDICT USING THE ML MODELS TRAINED USING MLtest.py
+        #inside 1 is bear or bull classifier
+        inside = self.prepare_BB_array(self, close, high, low, open, volume, returns)
+        new_x = scaler.transform(inside.reshape(1, -1))
+        prediction = clf.predict(new_x)[0]
 
+        #inside 2 is VOLATILITY
+        inside2 = self.prepare_vol_array(self, close, high, low, open, volume, returns)
+        new_x = scaler.transform(inside2.reshape(1, -1))
+        prediction = clf.predict(new_x)[0]
+
+        #updating the obv metric
+        if (close[0] > close[-1]): self.obv+= volume[0]
+        elif (close[0] == close[-1]): self.obv += 0
+        else: obv -= volume[0]
+
+        #obs for the neutral RL agent
         return np.array(
             list(self.pricesarray) +
             list(self.volarray) +
@@ -129,6 +300,8 @@ class Environment(gym.Env):
                 holdings_normalized,
                 cash_normalized,
             ],
+            #+list(inside1),
+            #+list(inside2),
             dtype=np.float32
         )
 
@@ -144,6 +317,9 @@ class Environment(gym.Env):
         self.df = self.dataframe["Close"][self.ticker]
         self.dfh = self.dataframe["High"][self.ticker]
         self.dfl = self.dataframe["Low"][self.ticker]
+        self.dfo = self.dataframe["Open"][self.ticker]
+        self.dfv = self.dataframe["Volume"][self.ticker]
+        self.returns = self.df.pct_change()
         self.stock = Stock(id=self.ticker, pricepoint=None, name=self.ticker,
                         borderArr=None, sofferArr=None)
 
@@ -185,7 +361,6 @@ class Environment(gym.Env):
         qty = self.portfolio.holdings.get(self.stock.id, 0)
         i = min(self.gl_counter, len(self.df) - 1)
         return self.portfolio.cash + qty * self.df.iloc[i]
-
 
     def step(self, action):
 
