@@ -18,6 +18,6 @@ eval_results/
 models/
 
 .gitignore
-
+dolina/
 
 token.txt
