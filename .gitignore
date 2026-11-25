@@ -20,4 +20,6 @@ models/
 .gitignore
 dolina/
 
+MLtest.py
+
 token.txt
