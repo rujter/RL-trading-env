@@ -11,7 +11,6 @@ from Classes import get_policy_kwargs
 #config file includes all setup variables
 import config as C
 
-agent = C.agent
 MODELS_DIR = pathlib.Path("models")
 MODELS_DIR.mkdir(exist_ok=True)
 EVAL_DIR = pathlib.Path(C.EVAL_DIR)
@@ -87,7 +86,7 @@ def main():
                             checkpoint_callback = None
                             #-------------------------------------------------------AGENT SELECTOR----------------------------------------------#
 
-                            
+
                             #determins the frequency of checkpoints 
                             if C.CHECKPOINT_FREQ > 0:
                                 checkpoint_callback = CheckpointCallback(
