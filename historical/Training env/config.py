@@ -7,7 +7,7 @@ SEEDS = list(range(START_SEED, START_SEED + NUM_SEEDS))
 
 #configs of a and b reward values for training.py
 TARGET_CONFIGS = [
-    (0.75, 1.30),
+    (1, 1.25),
     (0.75, 1.30),
     (0.50, 2.20),
     (1.25, 1.90),
