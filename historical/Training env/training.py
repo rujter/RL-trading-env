@@ -31,7 +31,7 @@ test_tickers = [
     "LIN", "NEM", "DIA", "XLK",
 ]
 
-tort = False #if true its trainig, else testing
+tort = True #if true its trainig, else testing
 
 class Environment(gym.Env):
 
