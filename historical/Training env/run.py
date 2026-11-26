@@ -66,6 +66,8 @@ def main():
             timesteps = C.TOTAL_TIMESTEPS #timesteps
             for architecture in C.ARCHITECTURE: #architecture
                 for data_name, DATA in C.DATAFRAME.items(): #TIMEFRAME
+                    if not tort:                                  # testing: use the test data
+                        DATA = C.DATAFRAME_TEST[data_name]
 
                     for lookback in C.LOOKBACKS:
                         name = f"{C.MODEL_PREFIX}_s{seed}_a{a:.2f}_b{b:.2f}_arch:{architecture}_data:{data_name}_lookback:{lookback}"

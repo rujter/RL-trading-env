@@ -22,10 +22,10 @@ ARCHITECTURE = [
 #coefficient for the drawdown penalty in the reward calculation in training.py
 FIXED_LAMBDA = 0.0
 
-df1 = pd.read_csv("cache.csv", header=[0,1], skiprows=[2], index_col=0)
-DATAFRAME = {
-    "df1": df1
-}
+df_train = pd.read_csv("cachetest.csv", header=[0,1], skiprows=[2], index_col=0)
+df_test  = pd.read_csv("cache.csv", header=[0,1], skiprows=[2], index_col=0)
+DATAFRAME      = {"hist": df_train}     # used for training
+DATAFRAME_TEST = {"hist": df_test}      # used for testing
 
 TOTAL_TIMESTEPS = 3000_000
 CHECKPOINT_FREQ = 100_000  

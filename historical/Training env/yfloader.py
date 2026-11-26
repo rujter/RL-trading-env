@@ -17,8 +17,8 @@ tickers = [
     "LIN", "NEM", "DIA", "XLK",
 ]
 
-start_date = datetime(2024, 1, 1)
-end_date = datetime(2026, 1, 1)
+start_date = datetime(2017, 1, 1)
+end_date = datetime(2021, 1, 1)
 cache_file = f"cache_{start_date.year}-{end_date.year}.csv"
 
 
